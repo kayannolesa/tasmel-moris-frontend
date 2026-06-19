@@ -8,7 +8,7 @@ services:
       - key: NODE_VERSION
         value: "20"
       - key: VITE_API_BASE_URL
-        sync: false
+        value: "https://tasmel-moris-backend.onrender.com"
     routes:
       - type: rewrite
         source: /*

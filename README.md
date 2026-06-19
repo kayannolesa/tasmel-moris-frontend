@@ -19,3 +19,21 @@ Set the backend URL when the backend environment is ready:
 ```bash
 VITE_API_BASE_URL=http://localhost:10000
 ```
+
+Production Render value:
+
+```bash
+VITE_API_BASE_URL=https://tasmel-moris-backend.onrender.com
+```
+
+## Core Shell
+
+The frontend now includes:
+
+- staff login
+- protected workspace routes
+- responsive desktop and mobile navigation
+- system readiness dashboard
+- security summary dashboard
+- account password change
+- API session refresh through the backend refresh cookie
