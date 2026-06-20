@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   Building2,
   BadgeDollarSign,
   ChevronLeft,
@@ -11,8 +12,11 @@ import {
   Menu,
   Landmark,
   ListChecks,
+  Monitor,
+  Plug,
   Scale,
   Settings2,
+  ShieldCheck,
   UserCircle,
   UsersRound,
   X,
@@ -33,6 +37,11 @@ const navItems = [
   { to: "/workflow", label: "Workflow", icon: GitPullRequestArrow },
   { to: "/documents", label: "Documents", icon: FolderArchive },
   { to: "/collections", label: "Collections", icon: Gavel },
+  { to: "/compliance", label: "Compliance", icon: ShieldCheck },
+  { to: "/disputes", label: "Reviews", icon: Scale },
+  { to: "/licensing", label: "Licensing", icon: BadgeCheck },
+  { to: "/portal", label: "Digital Services", icon: Monitor },
+  { to: "/integrations", label: "Integrations", icon: Plug },
   { to: "/account", label: "Account", icon: UserCircle },
 ];
 
