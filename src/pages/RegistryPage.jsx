@@ -227,6 +227,13 @@ function complianceTone(state) {
   return "neutral";
 }
 
+function disputeTone(state) {
+  if (["DECIDED", "CLOSED", "UPHOLD", "UPHELD", "VARY", "VARIED", "NOTICE_ISSUED", "WITHDRAWN"].includes(state)) return "success";
+  if (["LODGED", "UNDER_REVIEW", "IN_REVIEW", "OPEN", "FILED", "AWAITING_INFORMATION", "PENDING"].includes(state)) return "warning";
+  if (["ESCALATED", "DECISION_DUE", "APPEALED", "REJECTED", "CANCELLED", "DISMISSED"].includes(state)) return "danger";
+  return "neutral";
+}
+
 function DuplicatePanel({ candidates, acknowledged, onAcknowledged }) {
   if (!candidates?.length) {
     return (
@@ -330,6 +337,9 @@ export default function RegistryPage() {
   const openAudits = selected?.audit_engagements?.filter((audit) => ["PLANNED", "OPEN", "IN_PROGRESS"].includes(audit.audit_state_cd)) || [];
   const openInvestigations = selected?.investigations?.filter((investigation) => ["OPEN", "UNDER_REVIEW", "ESCALATED"].includes(investigation.investigation_state_cd)) || [];
   const openInformationRequests = selected?.information_requests?.filter((request) => ["DRAFT", "ISSUED"].includes(request.request_state_cd)) || [];
+  const openReviewFiles = selected?.review_files?.filter((review) => ["LODGED", "IN_REVIEW", "UNDER_REVIEW", "AWAITING_INFORMATION", "ESCALATED"].includes(review.review_state_cd) || ["LODGED", "UNDER_REVIEW", "AWAITING_INFORMATION", "DECISION_DUE", "ESCALATED"].includes(review.queue_state_cd)) || [];
+  const openExternalAppeals = selected?.external_appeals?.filter((appeal) => ["FILED", "HEARING_SCHEDULED", "UNDER_REVIEW"].includes(appeal.appeal_state_cd)) || [];
+  const disputedReviewTotal = selected?.review_issues?.reduce((total, issue) => total + Number(issue.disputed_amt || 0), 0) || 0;
 
   const subjectOptions = useMemo(
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
@@ -878,6 +888,55 @@ export default function RegistryPage() {
     { key: "assessed_liability_amt", label: "Assessed", render: (row) => formatMoney(row.assessed_liability_amt) },
     { key: "relief_decision_cd", label: "Relief", render: (row) => compactCode(row.relief_decision_cd) },
     { key: "disclosure_state_cd", label: "State", render: (row) => <StatusPill tone={complianceTone(row.disclosure_state_cd)}>{compactCode(row.disclosure_state_cd)}</StatusPill> },
+  ];
+
+  const reviewFileColumns = [
+    { key: "review_file_no", label: "Review" },
+    { key: "liability_notice_no", label: "Notice", render: (row) => row.liability_notice_no || "-" },
+    { key: "revenue_kind_name", label: "Revenue", render: (row) => row.revenue_kind_name || "All revenue" },
+    { key: "decision_due_dt", label: "Due", render: (row) => formatDate(row.decision_due_dt) },
+    { key: "disputed_amt", label: "Disputed", render: (row) => formatMoney(row.disputed_amt) },
+    { key: "queue_state_cd", label: "Queue", render: (row) => <StatusPill tone={disputeTone(row.queue_state_cd)}>{compactCode(row.queue_state_cd)}</StatusPill> },
+  ];
+
+  const reviewIssueColumns = [
+    { key: "review_file_no", label: "Review" },
+    { key: "issue_type_cd", label: "Issue", render: (row) => compactCode(row.issue_type_cd) },
+    { key: "disputed_amt", label: "Disputed", render: (row) => formatMoney(row.disputed_amt) },
+    { key: "content_no", label: "Evidence", render: (row) => row.content_no || row.file_name_txt || "-" },
+    { key: "issue_state_cd", label: "State", render: (row) => <StatusPill tone={disputeTone(row.issue_state_cd)}>{compactCode(row.issue_state_cd)}</StatusPill> },
+  ];
+
+  const reviewDecisionColumns = [
+    { key: "review_file_no", label: "Review" },
+    { key: "decision_cd", label: "Decision", render: (row) => <StatusPill tone={disputeTone(row.decision_cd)}>{compactCode(row.decision_cd)}</StatusPill> },
+    { key: "decision_dt", label: "Date", render: (row) => formatDate(row.decision_dt) },
+    { key: "financial_impact_amt", label: "Impact", render: (row) => formatMoney(row.financial_impact_amt) },
+    { key: "decision_notice_no", label: "Notice", render: (row) => row.decision_notice_no || "-" },
+    { key: "implementation_state_cd", label: "Implementation", render: (row) => <StatusPill tone={disputeTone(row.implementation_state_cd)}>{compactCode(row.implementation_state_cd)}</StatusPill> },
+  ];
+
+  const externalAppealColumns = [
+    { key: "appeal_no", label: "Appeal" },
+    { key: "review_file_no", label: "Review" },
+    { key: "external_reference_no", label: "External ref", render: (row) => row.external_reference_no || "-" },
+    { key: "court_or_tribunal_txt", label: "Body", render: (row) => row.court_or_tribunal_txt || row.appeal_body_txt || "-" },
+    { key: "hearing_dt", label: "Hearing", render: (row) => formatDate(row.hearing_dt) },
+    { key: "appeal_state_cd", label: "State", render: (row) => <StatusPill tone={disputeTone(row.appeal_state_cd)}>{compactCode(row.appeal_state_cd)}</StatusPill> },
+  ];
+
+  const reviewLinkColumns = [
+    { key: "review_file_no", label: "Review", render: (row) => row.review_file_no || "-" },
+    { key: "target_schema_cd", label: "Domain", render: (row) => compactCode(row.target_schema_cd) },
+    { key: "target_table_cd", label: "Record", render: (row) => compactCode(row.target_table_cd) },
+    { key: "target_role_cd", label: "Role", render: (row) => compactCode(row.target_role_cd) },
+  ];
+
+  const reviewLifecycleColumns = [
+    { key: "event_ts", label: "Time", render: (row) => formatDateTime(row.event_ts) },
+    { key: "review_file_no", label: "Review" },
+    { key: "event_type_cd", label: "Event", render: (row) => compactCode(row.event_type_cd) },
+    { key: "to_review_state_cd", label: "State", render: (row) => <StatusPill tone={disputeTone(row.to_review_state_cd)}>{compactCode(row.to_review_state_cd)}</StatusPill> },
   ];
 
   const accountHoldColumns = [
@@ -1443,6 +1502,21 @@ export default function RegistryPage() {
                       <span>Evidence</span>
                       <strong>{formatNumber(selected.evidence_records?.length)}</strong>
                     </div>
+                    <div className="registry-operational-item">
+                      <Scale size={18} />
+                      <span>Open reviews</span>
+                      <strong>{formatNumber(openReviewFiles.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <BadgeDollarSign size={18} />
+                      <span>Disputed</span>
+                      <strong>{formatMoney(disputedReviewTotal)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <Gavel size={18} />
+                      <span>Appeals</span>
+                      <strong>{formatNumber(openExternalAppeals.length)}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -1617,6 +1691,21 @@ export default function RegistryPage() {
                 <div className="registry-record-panel">
                   <div className="section-heading section-heading--compact">
                     <div>
+                      <span>Reviews and appeals</span>
+                      <h2>Disputes, Decision Outcomes And Evidence</h2>
+                    </div>
+                    <Scale size={20} />
+                  </div>
+                  <DataTable columns={reviewFileColumns} rows={selected.review_files || []} keyField="review_file_uid" empty="No review files recorded" />
+                  <DataTable columns={reviewIssueColumns} rows={selected.review_issues || []} keyField="review_issue_uid" empty="No review issues recorded" />
+                  <DataTable columns={reviewDecisionColumns} rows={selected.review_decisions || []} keyField="decision_outcome_uid" empty="No review decisions recorded" />
+                  <DataTable columns={externalAppealColumns} rows={selected.external_appeals || []} keyField="external_appeal_uid" empty="No external appeals recorded" />
+                  <DataTable columns={reviewLinkColumns} rows={selected.review_record_links || []} keyField="review_record_link_uid" empty="No linked review evidence recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
                       <span>Revenue lifecycle</span>
                       <h2>Operational History</h2>
                     </div>
@@ -1624,6 +1713,7 @@ export default function RegistryPage() {
                   </div>
                   <DataTable columns={obligationLifecycleColumns} rows={selected.obligation_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No obligation lifecycle events recorded" />
                   <DataTable columns={assessmentLifecycleColumns} rows={selected.assessment_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No assessment lifecycle events recorded" />
+                  <DataTable columns={reviewLifecycleColumns} rows={selected.review_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No review lifecycle events recorded" />
                 </div>
 
                 <div className="registry-record-panel">

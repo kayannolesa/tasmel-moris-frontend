@@ -37,6 +37,7 @@ const documentTypes = [
   ["REFUND_DECISION", "Refund decision notice"],
   ["DEMAND_NOTICE", "Demand notice"],
   ["APPROVAL_DECISION", "Approval decision notice"],
+  ["REVIEW_DECISION", "Review decision notice"],
   ["TAXPAYER_REGISTRATION_SUMMARY", "Taxpayer registration summary"],
 ];
 
@@ -49,6 +50,8 @@ const targetConfig = {
   RECOVERY_MATTER: { label: "Recovery matter", schema: "col", table: "col_recovery_matter" },
   WORK_MATTER: { label: "Work matter", schema: "ops", table: "ops_work_matter" },
   APPROVAL: { label: "Approval request", schema: "ops", table: "ops_approval_request" },
+  REVIEW_FILE: { label: "Review file", schema: "dsp", table: "dsp_review_file" },
+  REVIEW_DECISION: { label: "Review decision", schema: "dsp", table: "dsp_decision_outcome" },
 };
 
 const initialUpload = {
@@ -151,6 +154,8 @@ export default function DocumentsPage() {
   const [approvals, setApprovals] = useState([]);
   const [workMatters, setWorkMatters] = useState([]);
   const [recoveryMatters, setRecoveryMatters] = useState([]);
+  const [reviewFiles, setReviewFiles] = useState([]);
+  const [reviewDecisions, setReviewDecisions] = useState([]);
   const [uploadForm, setUploadForm] = useState(initialUpload);
   const [linkForm, setLinkForm] = useState(initialLink);
   const [generateForm, setGenerateForm] = useState(initialGenerate);
@@ -177,6 +182,8 @@ export default function DocumentsPage() {
       approvalsPayload,
       workPayload,
       recoveryPayload,
+      reviewPayload,
+      decisionPayload,
     ] = await Promise.all([
       apiRequest("/api/documents/overview"),
       apiRequest("/api/registry/subjects?pageSize=150"),
@@ -193,6 +200,8 @@ export default function DocumentsPage() {
       safeRequest("/api/workflow/approvals?pageSize=120", { rows: [] }),
       safeRequest("/api/workflow/matters?pageSize=120", { rows: [] }),
       safeRequest("/api/collections/recovery-matters?pageSize=120", { rows: [] }),
+      safeRequest("/api/disputes/review-files?pageSize=120", { rows: [] }),
+      safeRequest("/api/disputes/decisions?pageSize=120", { rows: [] }),
     ]);
 
     setOverview(overviewPayload.overview);
@@ -210,6 +219,8 @@ export default function DocumentsPage() {
     setApprovals(approvalsPayload.rows || []);
     setWorkMatters(workPayload.rows || []);
     setRecoveryMatters(recoveryPayload.rows || []);
+    setReviewFiles(reviewPayload.rows || []);
+    setReviewDecisions(decisionPayload.rows || []);
   }
 
   useEffect(() => {
@@ -224,8 +235,10 @@ export default function DocumentsPage() {
     if (linkForm.target_type === "DECLARATION") return declarations.map((declaration) => ({ value: declaration.declaration_uid, label: `${declaration.declaration_no} - ${declaration.display_name_txt}`, subject_uid: declaration.subject_uid }));
     if (linkForm.target_type === "WORK_MATTER") return workMatters.map((matter) => ({ value: matter.work_matter_uid, label: `${matter.work_matter_no} - ${matter.matter_title_txt || compactCode(matter.work_type_cd)}`, subject_uid: matter.subject_uid }));
     if (linkForm.target_type === "APPROVAL") return approvals.map((approval) => ({ value: approval.approval_request_uid, label: `${approval.approval_request_no} - ${approval.request_title_txt || compactCode(approval.requested_action_cd)}`, subject_uid: approval.subject_uid }));
+    if (linkForm.target_type === "REVIEW_FILE") return reviewFiles.map((review) => ({ value: review.review_file_uid, label: `${review.review_file_no} - ${review.display_name_txt}`, subject_uid: review.subject_uid }));
+    if (linkForm.target_type === "REVIEW_DECISION") return reviewDecisions.map((decision) => ({ value: decision.decision_outcome_uid, label: `${decision.review_file_no} - ${compactCode(decision.decision_cd)}`, subject_uid: decision.subject_uid }));
     return recoveryMatters.map((matter) => ({ value: matter.recovery_matter_uid, label: `${matter.recovery_matter_no} - ${matter.display_name_txt}`, subject_uid: matter.subject_uid }));
-  }, [approvals, declarations, linkForm.target_type, notices, receipts, recoveryMatters, refunds, subjects, workMatters]);
+  }, [approvals, declarations, linkForm.target_type, notices, receipts, recoveryMatters, refunds, reviewDecisions, reviewFiles, subjects, workMatters]);
 
   const generationTargets = useMemo(() => {
     if (generateForm.document_type_cd === "LIABILITY_NOTICE") return notices.map((notice) => ({ value: notice.liability_notice_uid, label: `${notice.liability_notice_no} - ${notice.display_name_txt}` }));
@@ -233,8 +246,9 @@ export default function DocumentsPage() {
     if (generateForm.document_type_cd === "REFUND_DECISION") return refunds.map((refund) => ({ value: refund.refund_request_uid, label: `${refund.refund_request_no} - ${compactCode(refund.refund_state_cd)}` }));
     if (generateForm.document_type_cd === "DEMAND_NOTICE") return recoveryMatters.map((matter) => ({ value: matter.recovery_matter_uid, label: `${matter.recovery_matter_no} - ${matter.display_name_txt}` }));
     if (generateForm.document_type_cd === "APPROVAL_DECISION") return approvals.map((approval) => ({ value: approval.approval_request_uid, label: `${approval.approval_request_no} - ${approval.request_title_txt || compactCode(approval.requested_action_cd)}` }));
+    if (generateForm.document_type_cd === "REVIEW_DECISION") return reviewDecisions.map((decision) => ({ value: decision.decision_outcome_uid, label: `${decision.review_file_no} - ${decision.display_name_txt || compactCode(decision.decision_cd)}` }));
     return subjects.map((subject) => ({ value: subject.subject_uid, label: `${subject.subject_no} - ${subject.display_name_txt}` }));
-  }, [approvals, generateForm.document_type_cd, notices, receipts, recoveryMatters, refunds, subjects]);
+  }, [approvals, generateForm.document_type_cd, notices, receipts, recoveryMatters, refunds, reviewDecisions, subjects]);
 
   async function submit(endpoint, body, reset, message, method = "POST") {
     setError("");
