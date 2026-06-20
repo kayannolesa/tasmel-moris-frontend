@@ -92,3 +92,41 @@ export async function apiRequest(path, options = {}) {
 
   return payload;
 }
+
+export async function downloadBlob(path, options = {}) {
+  if (!API_BASE_URL) {
+    throw new ApiError("The API base URL is not configured.", 0, null);
+  }
+
+  const { auth = true, headers = {}, ...fetchOptions } = options;
+  const requestHeaders = {
+    Accept: "*/*",
+    ...headers,
+  };
+
+  if (auth && accessToken) {
+    requestHeaders.Authorization = `Bearer ${accessToken}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: "include",
+    ...fetchOptions,
+    headers: requestHeaders,
+  });
+
+  if (!response.ok) {
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+    throw new ApiError(payload?.message || "Download failed.", response.status, payload);
+  }
+
+  return {
+    blob: await response.blob(),
+    fileName: response.headers.get("content-disposition")?.match(/filename=\"?([^\";]+)\"?/)?.[1] || "download.bin",
+    contentType: response.headers.get("content-type") || "application/octet-stream",
+  };
+}

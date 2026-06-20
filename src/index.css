@@ -1996,6 +1996,69 @@ a {
   gap: 16px;
 }
 
+.document-repository-grid,
+.document-generation-grid,
+.document-message-grid,
+.document-template-grid {
+  display: grid;
+  grid-template-columns: minmax(330px, 0.82fr) minmax(0, 1.28fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.document-two-column-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.document-two-column-form .field:has(textarea),
+.document-two-column-form > .check-control,
+.document-two-column-form > .primary-button,
+.document-two-column-form > .secondary-button {
+  grid-column: 1 / -1;
+}
+
+.document-generation-panel {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #c7d9dc;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f8fbfb 0%, #eef8f6 100%);
+}
+
+.document-generation-panel svg {
+  color: var(--teal);
+}
+
+.document-generation-panel strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.document-generation-panel span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.icon-inline-button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--teal-dark);
+}
+
+.icon-inline-button:hover {
+  border-color: rgba(15, 118, 110, 0.32);
+  background: #eef8f6;
+}
+
 .split-list {
   display: grid;
   gap: 12px;
@@ -2147,7 +2210,11 @@ a {
   .workflow-decision-grid,
   .workflow-task-grid,
   .workflow-engine-grid,
-  .workflow-admin-grid {
+  .workflow-admin-grid,
+  .document-repository-grid,
+  .document-generation-grid,
+  .document-message-grid,
+  .document-template-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
       "directory"
@@ -2184,7 +2251,11 @@ a {
   .workflow-decision-grid,
   .workflow-task-grid,
   .workflow-engine-grid,
-  .workflow-admin-grid {
+  .workflow-admin-grid,
+  .document-repository-grid,
+  .document-generation-grid,
+  .document-message-grid,
+  .document-template-grid {
     grid-template-areas: none;
   }
 
@@ -2316,7 +2387,8 @@ a {
     .collections-filter-form,
     .collections-two-column-form,
     .workflow-two-column-form,
-    .workflow-filter-form {
+    .workflow-filter-form,
+    .document-two-column-form {
     grid-template-columns: 1fr;
   }
 }

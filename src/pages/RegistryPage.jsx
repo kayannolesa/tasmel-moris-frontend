@@ -9,6 +9,7 @@ import {
   CalendarClock,
   ContactRound,
   FileCheck2,
+  FileText,
   Fingerprint,
   Gavel,
   History,
@@ -19,6 +20,7 @@ import {
   Plus,
   ReceiptText,
   Search,
+  Send,
   ShieldAlert,
   ShieldCheck,
   Scale,
@@ -778,6 +780,24 @@ export default function RegistryPage() {
     { key: "reviewed_by_name", label: "Officer", render: (row) => row.reviewed_by_name || "-" },
   ];
 
+  const documentColumns = [
+    { key: "content_no", label: "Document" },
+    { key: "document_title_txt", label: "Title", render: (row) => row.document_title_txt || row.file_name_txt || "-" },
+    { key: "document_category_cd", label: "Category", render: (row) => compactCode(row.document_category_cd || row.content_type_cd) },
+    { key: "issue_dt", label: "Issue date", render: (row) => formatDate(row.issue_dt) },
+    { key: "storage_backend_cd", label: "Storage", render: (row) => compactCode(row.storage_backend_cd) },
+    { key: "document_state_cd", label: "State", render: (row) => <StatusPill tone={row.document_state_cd === "ISSUED" || row.document_state_cd === "REGISTERED" ? "success" : "neutral"}>{compactCode(row.document_state_cd)}</StatusPill> },
+  ];
+
+  const messageColumns = [
+    { key: "message_no", label: "Message" },
+    { key: "subject_txt", label: "Subject", render: (row) => row.subject_txt || "-" },
+    { key: "delivery_channel_cd", label: "Channel", render: (row) => compactCode(row.delivery_channel_cd) },
+    { key: "sent_ts", label: "Sent", render: (row) => formatDateTime(row.sent_ts) },
+    { key: "portal_visible_bool", label: "Portal", render: (row) => row.portal_visible_bool ? "Visible" : "Internal" },
+    { key: "message_state_cd", label: "State", render: (row) => <StatusPill tone={row.message_state_cd === "READ" || row.message_state_cd === "DELIVERED" || row.message_state_cd === "SENT" ? "success" : "warning"}>{compactCode(row.message_state_cd)}</StatusPill> },
+  ];
+
   const accountHoldColumns = [
     { key: "hold_type_cd", label: "Type", render: (row) => compactCode(row.hold_type_cd) },
     { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
@@ -1184,6 +1204,14 @@ export default function RegistryPage() {
                   <span>Missed instalments</span>
                   <strong>{formatNumber(missedInstalments.length)}</strong>
                 </div>
+                <div>
+                  <span>Official documents</span>
+                  <strong>{formatNumber(selected.documents?.length)}</strong>
+                </div>
+                <div>
+                  <span>Messages</span>
+                  <strong>{formatNumber(selected.messages?.length)}</strong>
+                </div>
               </div>
             ) : (
               <EmptyRegistryState title="No taxpayer selected" text="Choose a taxpayer from search results to open the full profile." />
@@ -1417,6 +1445,18 @@ export default function RegistryPage() {
                   </div>
                   <DataTable columns={accountHoldColumns} rows={selected.account_holds || []} keyField="account_hold_uid" empty="No account holds recorded" />
                   <DataTable columns={concessionColumns} rows={selected.concessions || []} keyField="concession_uid" empty="No concessions recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Official records</span>
+                      <h2>Documents And Correspondence</h2>
+                    </div>
+                    <FileText size={20} />
+                  </div>
+                  <DataTable columns={documentColumns} rows={selected.documents || []} keyField="content_record_uid" empty="No official documents recorded" />
+                  <DataTable columns={messageColumns} rows={selected.messages || []} keyField="message_envelope_uid" empty="No correspondence recorded" />
                 </div>
 
                 <div className="registry-record-panel">
