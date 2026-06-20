@@ -1340,6 +1340,96 @@ a {
   background: #fbfdfd;
 }
 
+.registry-record-panel--operational {
+  background: linear-gradient(135deg, #fbfdfd 0%, #f2f8f7 100%);
+}
+
+.registry-operational-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.registry-operational-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 9px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.registry-operational-item svg {
+  color: var(--teal);
+}
+
+.registry-operational-item span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.registry-operational-item strong {
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.obligation-workbench-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.55fr) minmax(280px, 0.72fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.obligation-workbench-grid__action {
+  position: sticky;
+  top: 96px;
+}
+
+.obligation-filter-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.obligation-filter-form .full-span {
+  grid-column: 1 / -1;
+}
+
+.obligation-snapshot-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.obligation-snapshot-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.table-action-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(14, 116, 144, 0.26);
+  border-radius: 6px;
+  color: var(--teal-dark);
+  background: #ecfeff;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.table-action-button:hover {
+  background: #d8f7f8;
+}
+
+.table-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
 .split-list {
   display: grid;
   gap: 12px;
@@ -1470,7 +1560,8 @@ a {
   .security-grid,
   .role-verification-grid,
   .registry-search-grid,
-  .registry-registration-grid {
+  .registry-registration-grid,
+  .obligation-workbench-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
       "directory"
@@ -1486,7 +1577,8 @@ a {
   }
 
   .registry-search-grid,
-  .registry-registration-grid {
+  .registry-registration-grid,
+  .obligation-workbench-grid {
     grid-template-areas: none;
   }
 
@@ -1504,6 +1596,15 @@ a {
 
   .registry-registration-grid__side {
     position: static;
+  }
+
+  .obligation-workbench-grid__action {
+    position: static;
+  }
+
+  .obligation-snapshot-cards,
+  .registry-operational-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .permission-module-card {
@@ -1579,10 +1680,11 @@ a {
   .record-grid,
   .compact-form,
   .account-governance-card,
-  .permission-summary-grid,
-  .registry-filter-form,
-  .registry-create-form,
-  .registry-profile-card {
+    .permission-summary-grid,
+    .registry-filter-form,
+    .obligation-filter-form,
+    .registry-create-form,
+    .registry-profile-card {
     grid-template-columns: 1fr;
   }
 }
@@ -1624,7 +1726,9 @@ a {
   }
 
   .metric-grid,
-  .module-grid {
+  .module-grid,
+  .obligation-snapshot-cards,
+  .registry-operational-overview {
     grid-template-columns: 1fr;
   }
 

@@ -4,9 +4,12 @@ import {
   BadgeCheck,
   BookOpenCheck,
   Building2,
+  CalendarClock,
   ContactRound,
   Fingerprint,
   History,
+  Hand,
+  Landmark,
   Link2,
   MapPin,
   Plus,
@@ -27,7 +30,7 @@ import {
 } from "../components/common/WorkspacePrimitives.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
-import { compactCode, formatDate, formatDateTime, formatNumber } from "../utils/format.js";
+import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
 
 const tabs = [
   { id: "search", label: "Advanced Search" },
@@ -160,6 +163,19 @@ function registryTone(state) {
   return "neutral";
 }
 
+function dueTone(state) {
+  if (state === "PAID" || state === "FILED" || state === "ASSESSED") return "success";
+  if (state === "OVERDUE") return "danger";
+  if (state === "NOTIFIED") return "warning";
+  return "neutral";
+}
+
+function holdTone(state) {
+  if (state === "ACTIVE") return "danger";
+  if (state === "RELEASED") return "success";
+  return "neutral";
+}
+
 function DuplicatePanel({ candidates, acknowledged, onAcknowledged }) {
   if (!candidates?.length) {
     return (
@@ -241,6 +257,9 @@ export default function RegistryPage() {
 
   const selectedProfile = selected?.profile || null;
   const organisationMode = subjectForm.subject_class_cd === "ORGANISATION";
+  const activeHolds = selected?.account_holds?.filter((hold) => hold.hold_state_cd === "ACTIVE") || [];
+  const openDues = selected?.due_instances?.filter((due) => ["OPEN", "NOTIFIED", "OVERDUE"].includes(due.due_state_cd)) || [];
+  const activeConcessions = selected?.concessions?.filter((concession) => concession.concession_state_cd === "ACTIVE") || [];
 
   const subjectOptions = useMemo(
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
@@ -484,6 +503,64 @@ export default function RegistryPage() {
     { key: "event_type_cd", label: "Event", render: (row) => compactCode(row.event_type_cd) },
     { key: "action_cd", label: "Action", render: (row) => compactCode(row.action_cd) },
     { key: "display_name_txt", label: "Officer", render: (row) => row.display_name_txt || "-" },
+  ];
+
+  const obligationEnrolmentColumns = [
+    { key: "enrolment_no", label: "Enrolment" },
+    { key: "revenue_kind_name", label: "Revenue type" },
+    { key: "period_rule_code", label: "Rule", render: (row) => row.period_rule_code || "-" },
+    { key: "start_dt", label: "Start", render: (row) => formatDate(row.start_dt) },
+    { key: "service_site_name", label: "Service site", render: (row) => row.service_site_name || "-" },
+    {
+      key: "enrolment_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={row.enrolment_state_cd === "ACTIVE" ? "success" : "warning"}>{compactCode(row.enrolment_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const obligationDueColumns = [
+    { key: "due_dt", label: "Due date", render: (row) => formatDate(row.due_dt) },
+    { key: "revenue_kind_name", label: "Revenue type" },
+    { key: "period_label_txt", label: "Period", render: (row) => row.period_label_txt || "-" },
+    { key: "due_event_cd", label: "Event", render: (row) => compactCode(row.due_event_cd) },
+    { key: "amount_due_amt", label: "Amount", render: (row) => formatMoney(row.amount_due_amt || 0) },
+    {
+      key: "due_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={dueTone(row.due_state_cd)}>{compactCode(row.due_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const accountHoldColumns = [
+    { key: "hold_type_cd", label: "Type", render: (row) => compactCode(row.hold_type_cd) },
+    { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
+    { key: "hold_reason_txt", label: "Reason", render: (row) => row.hold_reason_txt || "-" },
+    { key: "approval_ts", label: "Approved", render: (row) => formatDateTime(row.approval_ts) },
+    {
+      key: "hold_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={holdTone(row.hold_state_cd)}>{compactCode(row.hold_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const concessionColumns = [
+    { key: "concession_reference_no", label: "Reference" },
+    { key: "concession_type_cd", label: "Type", render: (row) => compactCode(row.concession_type_cd) },
+    { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
+    { key: "component_name", label: "Component", render: (row) => row.component_name || "-" },
+    { key: "effective_from_dt", label: "From", render: (row) => formatDate(row.effective_from_dt) },
+    {
+      key: "concession_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={row.concession_state_cd === "ACTIVE" ? "success" : "neutral"}>{compactCode(row.concession_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const obligationLifecycleColumns = [
+    { key: "event_ts", label: "Time", render: (row) => formatDateTime(row.event_ts) },
+    { key: "event_type_cd", label: "Event", render: (row) => compactCode(row.event_type_cd) },
+    { key: "event_reason_txt", label: "Reason", render: (row) => row.event_reason_txt || "-" },
+    { key: "created_by_name_txt", label: "Officer", render: (row) => row.created_by_name_txt || "-" },
   ];
 
   return (
@@ -780,6 +857,22 @@ export default function RegistryPage() {
                   <span>Duplicate candidates</span>
                   <strong>{formatNumber(selected.duplicate_candidates?.length)}</strong>
                 </div>
+                <div>
+                  <span>Revenue enrolments</span>
+                  <strong>{formatNumber(selected.enrolments?.length)}</strong>
+                </div>
+                <div>
+                  <span>Open dues</span>
+                  <strong>{formatNumber(openDues.length)}</strong>
+                </div>
+                <div>
+                  <span>Active holds</span>
+                  <strong>{formatNumber(activeHolds.length)}</strong>
+                </div>
+                <div>
+                  <span>Concessions</span>
+                  <strong>{formatNumber(activeConcessions.length)}</strong>
+                </div>
               </div>
             ) : (
               <EmptyRegistryState title="No taxpayer selected" text="Choose a taxpayer from search results to open the full profile." />
@@ -816,6 +909,83 @@ export default function RegistryPage() {
           <section className="content-band registry-profile-grid__records">
             {selectedProfile ? (
               <div className="registry-record-stack">
+                <div className="registry-record-panel registry-record-panel--operational">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Operational position</span>
+                      <h2>Revenue Standing</h2>
+                    </div>
+                    <BadgeCheck size={20} />
+                  </div>
+                  <div className="registry-operational-overview">
+                    <div className="registry-operational-item">
+                      <Landmark size={18} />
+                      <span>Enrolments</span>
+                      <strong>{formatNumber(selected.enrolments?.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <CalendarClock size={18} />
+                      <span>Open dues</span>
+                      <strong>{formatNumber(openDues.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <Hand size={18} />
+                      <span>Active holds</span>
+                      <strong>{formatNumber(activeHolds.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <ShieldCheck size={18} />
+                      <span>Active concessions</span>
+                      <strong>{formatNumber(activeConcessions.length)}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Revenue enrolment</span>
+                      <h2>Registered Obligation Streams</h2>
+                    </div>
+                    <Landmark size={20} />
+                  </div>
+                  <DataTable columns={obligationEnrolmentColumns} rows={selected.enrolments || []} keyField="enrolment_uid" empty="No revenue enrolments recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Obligation calendar</span>
+                      <h2>Filing And Payment Due Dates</h2>
+                    </div>
+                    <CalendarClock size={20} />
+                  </div>
+                  <DataTable columns={obligationDueColumns} rows={selected.due_instances || []} keyField="due_instance_uid" empty="No obligation due dates generated" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Controls</span>
+                      <h2>Holds And Concessions</h2>
+                    </div>
+                    <Hand size={20} />
+                  </div>
+                  <DataTable columns={accountHoldColumns} rows={selected.account_holds || []} keyField="account_hold_uid" empty="No account holds recorded" />
+                  <DataTable columns={concessionColumns} rows={selected.concessions || []} keyField="concession_uid" empty="No concessions recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Revenue lifecycle</span>
+                      <h2>Operational History</h2>
+                    </div>
+                    <History size={20} />
+                  </div>
+                  <DataTable columns={obligationLifecycleColumns} rows={selected.obligation_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No obligation lifecycle events recorded" />
+                </div>
+
                 <div className="registry-record-panel">
                   <div className="section-heading section-heading--compact">
                     <div>
