@@ -122,13 +122,25 @@ a {
 
 .brand-lockup__seal,
 .workspace-brand__seal {
-  width: 54px;
+  width: 64px;
   height: 54px;
   display: grid;
   place-items: center;
   border-radius: 8px;
   color: #102331;
   background: #fff;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(16, 35, 49, 0.08),
+    0 12px 26px rgba(0, 0, 0, 0.14);
+}
+
+.brand-lockup__seal img,
+.workspace-brand__seal img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-lockup span,
@@ -398,9 +410,9 @@ a {
 }
 
 .workspace-brand__seal {
-  width: 48px;
+  width: 56px;
   height: 48px;
-  flex: 0 0 48px;
+  flex: 0 0 56px;
 }
 
 .workspace-brand__text strong {
@@ -514,6 +526,11 @@ a {
 .workspace--collapsed .workspace-nav__item span,
 .workspace--collapsed .sidebar-collapse span {
   display: none;
+}
+
+.workspace--collapsed .workspace-brand {
+  justify-content: center;
+  padding-inline: 12px;
 }
 
 .workspace--collapsed .workspace-nav__item,
@@ -951,6 +968,11 @@ a {
   .workspace--collapsed .workspace-nav__item span,
   .workspace--collapsed .sidebar-collapse span {
     display: block;
+  }
+
+  .workspace--collapsed .workspace-brand {
+    justify-content: flex-start;
+    padding-inline: 18px;
   }
 
   .workspace--collapsed .workspace-nav__item,

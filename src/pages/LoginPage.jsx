@@ -1,4 +1,4 @@
-import { ArrowRight, Building2, CheckCircle2, LockKeyhole, ServerCog, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, LockKeyhole, ServerCog, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import StatusPill from "../components/common/StatusPill.jsx";
@@ -57,7 +57,7 @@ export default function LoginPage() {
         <div className="login-panel__mast">
           <div className="brand-lockup">
             <div className="brand-lockup__seal">
-              <Building2 size={32} />
+              <img src="/mor-logo.png" alt="Ministry of Revenue logo" />
             </div>
             <div>
               <span>Ministry of Revenue</span>

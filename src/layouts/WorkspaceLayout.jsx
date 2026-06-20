@@ -1,6 +1,5 @@
 import {
   BadgeCheck,
-  Building2,
   BadgeDollarSign,
   ChevronLeft,
   FolderArchive,
@@ -65,7 +64,7 @@ export default function WorkspaceLayout() {
       <aside className={`workspace-sidebar ${sidebarOpen ? "workspace-sidebar--open" : ""}`}>
         <div className="workspace-brand">
           <div className="workspace-brand__seal">
-            <Building2 size={22} strokeWidth={2.1} />
+            <img src="/mor-logo.png" alt="Ministry of Revenue logo" />
           </div>
           <div className="workspace-brand__text">
             <strong>MORIS</strong>
