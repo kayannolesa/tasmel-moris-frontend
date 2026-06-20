@@ -38,6 +38,8 @@ const documentTypes = [
   ["DEMAND_NOTICE", "Demand notice"],
   ["APPROVAL_DECISION", "Approval decision notice"],
   ["REVIEW_DECISION", "Review decision notice"],
+  ["PERMIT_CERTIFICATE", "Permit certificate"],
+  ["CLEARANCE_CERTIFICATE", "Clearance certificate"],
   ["TAXPAYER_REGISTRATION_SUMMARY", "Taxpayer registration summary"],
 ];
 
@@ -52,6 +54,8 @@ const targetConfig = {
   APPROVAL: { label: "Approval request", schema: "ops", table: "ops_approval_request" },
   REVIEW_FILE: { label: "Review file", schema: "dsp", table: "dsp_review_file" },
   REVIEW_DECISION: { label: "Review decision", schema: "dsp", table: "dsp_decision_outcome" },
+  PERMIT: { label: "Licence or permit", schema: "lic", table: "lic_permit_record" },
+  CLEARANCE_RESULT: { label: "Clearance result", schema: "cert", table: "cert_clearance_result" },
 };
 
 const initialUpload = {
@@ -156,6 +160,8 @@ export default function DocumentsPage() {
   const [recoveryMatters, setRecoveryMatters] = useState([]);
   const [reviewFiles, setReviewFiles] = useState([]);
   const [reviewDecisions, setReviewDecisions] = useState([]);
+  const [permitRecords, setPermitRecords] = useState([]);
+  const [clearanceResults, setClearanceResults] = useState([]);
   const [uploadForm, setUploadForm] = useState(initialUpload);
   const [linkForm, setLinkForm] = useState(initialLink);
   const [generateForm, setGenerateForm] = useState(initialGenerate);
@@ -184,6 +190,8 @@ export default function DocumentsPage() {
       recoveryPayload,
       reviewPayload,
       decisionPayload,
+      permitPayload,
+      clearancePayload,
     ] = await Promise.all([
       apiRequest("/api/documents/overview"),
       apiRequest("/api/registry/subjects?pageSize=150"),
@@ -202,6 +210,8 @@ export default function DocumentsPage() {
       safeRequest("/api/collections/recovery-matters?pageSize=120", { rows: [] }),
       safeRequest("/api/disputes/review-files?pageSize=120", { rows: [] }),
       safeRequest("/api/disputes/decisions?pageSize=120", { rows: [] }),
+      safeRequest("/api/licensing/permits?pageSize=120", { rows: [] }),
+      safeRequest("/api/licensing/clearance-results?pageSize=120", { rows: [] }),
     ]);
 
     setOverview(overviewPayload.overview);
@@ -221,6 +231,8 @@ export default function DocumentsPage() {
     setRecoveryMatters(recoveryPayload.rows || []);
     setReviewFiles(reviewPayload.rows || []);
     setReviewDecisions(decisionPayload.rows || []);
+    setPermitRecords(permitPayload.rows || []);
+    setClearanceResults(clearancePayload.rows || []);
   }
 
   useEffect(() => {
@@ -237,8 +249,10 @@ export default function DocumentsPage() {
     if (linkForm.target_type === "APPROVAL") return approvals.map((approval) => ({ value: approval.approval_request_uid, label: `${approval.approval_request_no} - ${approval.request_title_txt || compactCode(approval.requested_action_cd)}`, subject_uid: approval.subject_uid }));
     if (linkForm.target_type === "REVIEW_FILE") return reviewFiles.map((review) => ({ value: review.review_file_uid, label: `${review.review_file_no} - ${review.display_name_txt}`, subject_uid: review.subject_uid }));
     if (linkForm.target_type === "REVIEW_DECISION") return reviewDecisions.map((decision) => ({ value: decision.decision_outcome_uid, label: `${decision.review_file_no} - ${compactCode(decision.decision_cd)}`, subject_uid: decision.subject_uid }));
+    if (linkForm.target_type === "PERMIT") return permitRecords.map((permit) => ({ value: permit.permit_uid, label: `${permit.permit_no} - ${permit.display_name_txt}`, subject_uid: permit.subject_uid }));
+    if (linkForm.target_type === "CLEARANCE_RESULT") return clearanceResults.map((result) => ({ value: result.clearance_result_uid, label: `${result.clearance_request_no || "Clearance"} - ${result.display_name_txt}`, subject_uid: result.subject_uid }));
     return recoveryMatters.map((matter) => ({ value: matter.recovery_matter_uid, label: `${matter.recovery_matter_no} - ${matter.display_name_txt}`, subject_uid: matter.subject_uid }));
-  }, [approvals, declarations, linkForm.target_type, notices, receipts, recoveryMatters, refunds, reviewDecisions, reviewFiles, subjects, workMatters]);
+  }, [approvals, clearanceResults, declarations, linkForm.target_type, notices, permitRecords, receipts, recoveryMatters, refunds, reviewDecisions, reviewFiles, subjects, workMatters]);
 
   const generationTargets = useMemo(() => {
     if (generateForm.document_type_cd === "LIABILITY_NOTICE") return notices.map((notice) => ({ value: notice.liability_notice_uid, label: `${notice.liability_notice_no} - ${notice.display_name_txt}` }));
@@ -247,8 +261,10 @@ export default function DocumentsPage() {
     if (generateForm.document_type_cd === "DEMAND_NOTICE") return recoveryMatters.map((matter) => ({ value: matter.recovery_matter_uid, label: `${matter.recovery_matter_no} - ${matter.display_name_txt}` }));
     if (generateForm.document_type_cd === "APPROVAL_DECISION") return approvals.map((approval) => ({ value: approval.approval_request_uid, label: `${approval.approval_request_no} - ${approval.request_title_txt || compactCode(approval.requested_action_cd)}` }));
     if (generateForm.document_type_cd === "REVIEW_DECISION") return reviewDecisions.map((decision) => ({ value: decision.decision_outcome_uid, label: `${decision.review_file_no} - ${decision.display_name_txt || compactCode(decision.decision_cd)}` }));
+    if (generateForm.document_type_cd === "PERMIT_CERTIFICATE") return permitRecords.map((permit) => ({ value: permit.permit_uid, label: `${permit.permit_no} - ${permit.display_name_txt}` }));
+    if (generateForm.document_type_cd === "CLEARANCE_CERTIFICATE") return clearanceResults.map((result) => ({ value: result.clearance_result_uid, label: `${result.clearance_request_no || "Clearance"} - ${result.display_name_txt}` }));
     return subjects.map((subject) => ({ value: subject.subject_uid, label: `${subject.subject_no} - ${subject.display_name_txt}` }));
-  }, [approvals, generateForm.document_type_cd, notices, receipts, recoveryMatters, refunds, reviewDecisions, subjects]);
+  }, [approvals, clearanceResults, generateForm.document_type_cd, notices, permitRecords, receipts, recoveryMatters, refunds, reviewDecisions, subjects]);
 
   async function submit(endpoint, body, reset, message, method = "POST") {
     setError("");

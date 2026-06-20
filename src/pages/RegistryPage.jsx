@@ -234,6 +234,13 @@ function disputeTone(state) {
   return "neutral";
 }
 
+function licenceTone(state) {
+  if (["ACTIVE", "APPROVED", "ISSUED", "CLEAR", "PAID", "SATISFIED", "RENEWED"].includes(state)) return "success";
+  if (["DRAFT", "SUBMITTED", "UNDER_REVIEW", "PENDING", "DUE", "CONDITIONAL"].includes(state)) return "warning";
+  if (["SUSPENDED", "EXPIRED", "CANCELLED", "NOT_CLEAR", "OVERDUE", "BLOCKED", "UNPAID"].includes(state)) return "danger";
+  return "neutral";
+}
+
 function DuplicatePanel({ candidates, acknowledged, onAcknowledged }) {
   if (!candidates?.length) {
     return (
@@ -340,6 +347,11 @@ export default function RegistryPage() {
   const openReviewFiles = selected?.review_files?.filter((review) => ["LODGED", "IN_REVIEW", "UNDER_REVIEW", "AWAITING_INFORMATION", "ESCALATED"].includes(review.review_state_cd) || ["LODGED", "UNDER_REVIEW", "AWAITING_INFORMATION", "DECISION_DUE", "ESCALATED"].includes(review.queue_state_cd)) || [];
   const openExternalAppeals = selected?.external_appeals?.filter((appeal) => ["FILED", "HEARING_SCHEDULED", "UNDER_REVIEW"].includes(appeal.appeal_state_cd)) || [];
   const disputedReviewTotal = selected?.review_issues?.reduce((total, issue) => total + Number(issue.disputed_amt || 0), 0) || 0;
+  const activeLicences = selected?.licence_permits?.filter((permit) => ["ACTIVE", "APPROVED", "ISSUED", "SUSPENDED"].includes(permit.permit_state_cd)) || [];
+  const blockedLicences = selected?.licence_permits?.filter((permit) => permit.active_hold_block_bool || Number(permit.restriction_count || 0) > 0) || [];
+  const unpaidLicenceFees = selected?.licence_fees?.filter((fee) => !["PAID", "WAIVED", "CANCELLED"].includes(fee.payment_status_cd || fee.assessment_state_cd)) || [];
+  const openLicenceRenewals = selected?.licence_renewals?.filter((renewal) => ["DUE", "DRAFT", "SUBMITTED", "UNDER_REVIEW", "PENDING"].includes(renewal.renewal_state_cd)) || [];
+  const openClearanceRequests = selected?.clearance_requests?.filter((request) => ["REQUESTED", "OPEN", "IN_REVIEW", "UNDER_REVIEW", "PENDING"].includes(request.request_state_cd)) || [];
 
   const subjectOptions = useMemo(
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
@@ -939,6 +951,83 @@ export default function RegistryPage() {
     { key: "to_review_state_cd", label: "State", render: (row) => <StatusPill tone={disputeTone(row.to_review_state_cd)}>{compactCode(row.to_review_state_cd)}</StatusPill> },
   ];
 
+  const licencePremisesColumns = [
+    { key: "premises_name_txt", label: "Premises" },
+    { key: "address_txt", label: "Address", render: (row) => row.address_txt || row.physical_location_txt || "-" },
+    { key: "premises_type_cd", label: "Type", render: (row) => compactCode(row.premises_type_cd) },
+    { key: "premises_state_cd", label: "State", render: (row) => <StatusPill tone={licenceTone(row.premises_state_cd)}>{compactCode(row.premises_state_cd)}</StatusPill> },
+  ];
+
+  const licencePermitColumns = [
+    { key: "permit_no", label: "Licence" },
+    { key: "licence_type_name", label: "Type", render: (row) => row.licence_type_name || compactCode(row.permit_type_cd) },
+    { key: "premises_name_txt", label: "Premises", render: (row) => row.premises_name_txt || "-" },
+    { key: "effective_from_dt", label: "Start", render: (row) => formatDate(row.effective_from_dt) },
+    { key: "expiry_dt", label: "Expiry", render: (row) => formatDate(row.expiry_dt) },
+    { key: "unpaid_fee_amt", label: "Unpaid", render: (row) => formatMoney(row.unpaid_fee_amt || 0) },
+    {
+      key: "permit_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={licenceTone(row.permit_state_cd)}>{compactCode(row.permit_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const licenceFeeColumns = [
+    { key: "permit_no", label: "Licence" },
+    { key: "fee_type_cd", label: "Fee", render: (row) => compactCode(row.fee_type_cd) },
+    { key: "revenue_kind_name", label: "Revenue", render: (row) => row.revenue_kind_name || "-" },
+    { key: "fee_amt", label: "Amount", render: (row) => formatMoney(row.fee_amt || 0) },
+    { key: "due_dt", label: "Due", render: (row) => formatDate(row.due_dt) },
+    { key: "liability_notice_no", label: "Notice", render: (row) => row.liability_notice_no || "-" },
+    { key: "payment_status_cd", label: "Payment", render: (row) => <StatusPill tone={licenceTone(row.payment_status_cd)}>{compactCode(row.payment_status_cd)}</StatusPill> },
+  ];
+
+  const licenceConditionColumns = [
+    { key: "permit_no", label: "Licence" },
+    { key: "condition_type_cd", label: "Condition", render: (row) => compactCode(row.condition_type_cd) },
+    { key: "condition_txt", label: "Requirement", render: (row) => row.condition_txt || "-" },
+    { key: "due_dt", label: "Due", render: (row) => formatDate(row.due_dt) },
+    { key: "restriction_bool", label: "Restriction", render: (row) => <StatusPill tone={row.restriction_bool ? "danger" : "neutral"}>{row.restriction_bool ? "Yes" : "No"}</StatusPill> },
+    { key: "compliance_state_cd", label: "State", render: (row) => <StatusPill tone={licenceTone(row.compliance_state_cd)}>{compactCode(row.compliance_state_cd)}</StatusPill> },
+  ];
+
+  const licenceRenewalColumns = [
+    { key: "renewal_no", label: "Renewal" },
+    { key: "permit_no", label: "Licence" },
+    { key: "window_start_dt", label: "Window opens", render: (row) => formatDate(row.window_start_dt) },
+    { key: "window_end_dt", label: "Window closes", render: (row) => formatDate(row.window_end_dt) },
+    { key: "reassessed_fee_amt", label: "Fee", render: (row) => formatMoney(row.reassessed_fee_amt || row.fee_due_amt || 0) },
+    { key: "approval_state_cd", label: "Approval", render: (row) => row.approval_state_cd ? <StatusPill tone={licenceTone(row.approval_state_cd)}>{compactCode(row.approval_state_cd)}</StatusPill> : "-" },
+    { key: "renewal_state_cd", label: "State", render: (row) => <StatusPill tone={licenceTone(row.renewal_state_cd)}>{compactCode(row.renewal_state_cd)}</StatusPill> },
+  ];
+
+  const clearanceRequestColumns = [
+    { key: "clearance_request_no", label: "Request" },
+    { key: "permit_no", label: "Licence", render: (row) => row.permit_no || "-" },
+    { key: "requested_channel_cd", label: "Channel", render: (row) => compactCode(row.requested_channel_cd) },
+    { key: "requested_ts", label: "Requested", render: (row) => formatDateTime(row.requested_ts) },
+    { key: "assigned_name", label: "Officer", render: (row) => row.assigned_name || "-" },
+    { key: "request_state_cd", label: "State", render: (row) => <StatusPill tone={licenceTone(row.request_state_cd)}>{compactCode(row.request_state_cd)}</StatusPill> },
+  ];
+
+  const clearanceResultColumns = [
+    { key: "clearance_request_no", label: "Request" },
+    { key: "permit_no", label: "Licence", render: (row) => row.permit_no || "-" },
+    { key: "open_liability_count_no", label: "Liabilities", render: (row) => formatNumber(row.open_liability_count_no) },
+    { key: "overdue_obligation_count_no", label: "Overdue", render: (row) => formatNumber(row.overdue_obligation_count_no) },
+    { key: "active_hold_count_no", label: "Holds", render: (row) => formatNumber(row.active_hold_count_no) },
+    { key: "content_no", label: "Certificate", render: (row) => row.content_no || row.certificate_no || "-" },
+    { key: "result_cd", label: "Result", render: (row) => <StatusPill tone={licenceTone(row.result_cd)}>{compactCode(row.result_cd)}</StatusPill> },
+  ];
+
+  const licenceLifecycleColumns = [
+    { key: "event_ts", label: "Time", render: (row) => formatDateTime(row.event_ts) },
+    { key: "permit_no", label: "Licence" },
+    { key: "event_type_cd", label: "Event", render: (row) => compactCode(row.event_type_cd) },
+    { key: "to_permit_state_cd", label: "State", render: (row) => <StatusPill tone={licenceTone(row.to_permit_state_cd)}>{compactCode(row.to_permit_state_cd)}</StatusPill> },
+    { key: "created_by_name_txt", label: "Officer", render: (row) => row.created_by_name_txt || "-" },
+  ];
+
   const accountHoldColumns = [
     { key: "hold_type_cd", label: "Type", render: (row) => compactCode(row.hold_type_cd) },
     { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
@@ -1377,6 +1466,26 @@ export default function RegistryPage() {
                   <span>Info requests</span>
                   <strong>{formatNumber(openInformationRequests.length)}</strong>
                 </div>
+                <div>
+                  <span>Active licences</span>
+                  <strong>{formatNumber(activeLicences.length)}</strong>
+                </div>
+                <div>
+                  <span>Licence blocks</span>
+                  <strong>{formatNumber(blockedLicences.length)}</strong>
+                </div>
+                <div>
+                  <span>Unpaid licence fees</span>
+                  <strong>{formatNumber(unpaidLicenceFees.length)}</strong>
+                </div>
+                <div>
+                  <span>Licence renewals</span>
+                  <strong>{formatNumber(openLicenceRenewals.length)}</strong>
+                </div>
+                <div>
+                  <span>Clearance requests</span>
+                  <strong>{formatNumber(openClearanceRequests.length)}</strong>
+                </div>
               </div>
             ) : (
               <EmptyRegistryState title="No taxpayer selected" text="Choose a taxpayer from search results to open the full profile." />
@@ -1517,6 +1626,26 @@ export default function RegistryPage() {
                       <span>Appeals</span>
                       <strong>{formatNumber(openExternalAppeals.length)}</strong>
                     </div>
+                    <div className="registry-operational-item">
+                      <BadgeCheck size={18} />
+                      <span>Active licences</span>
+                      <strong>{formatNumber(activeLicences.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <ShieldAlert size={18} />
+                      <span>Licence blocks</span>
+                      <strong>{formatNumber(blockedLicences.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <BadgeDollarSign size={18} />
+                      <span>Licence fees</span>
+                      <strong>{formatNumber(unpaidLicenceFees.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <FileCheck2 size={18} />
+                      <span>Clearance requests</span>
+                      <strong>{formatNumber(openClearanceRequests.length)}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -1650,6 +1779,23 @@ export default function RegistryPage() {
                 <div className="registry-record-panel">
                   <div className="section-heading section-heading--compact">
                     <div>
+                      <span>Licences and certificates</span>
+                      <h2>Permits, Fees, Renewals And Clearance</h2>
+                    </div>
+                    <BadgeCheck size={20} />
+                  </div>
+                  <DataTable columns={licencePremisesColumns} rows={selected.licence_premises || []} keyField="premises_uid" empty="No licensed premises recorded" />
+                  <DataTable columns={licencePermitColumns} rows={selected.licence_permits || []} keyField="permit_uid" empty="No licence or permit records" />
+                  <DataTable columns={licenceFeeColumns} rows={selected.licence_fees || []} keyField="fee_assessment_uid" empty="No licence fees assessed" />
+                  <DataTable columns={licenceConditionColumns} rows={selected.licence_conditions || []} keyField="condition_uid" empty="No licence conditions recorded" />
+                  <DataTable columns={licenceRenewalColumns} rows={selected.licence_renewals || []} keyField="renewal_cycle_uid" empty="No renewal cycles recorded" />
+                  <DataTable columns={clearanceRequestColumns} rows={selected.clearance_requests || []} keyField="clearance_request_uid" empty="No clearance requests recorded" />
+                  <DataTable columns={clearanceResultColumns} rows={selected.clearance_results || []} keyField="clearance_result_uid" empty="No clearance results recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
                       <span>Official records</span>
                       <h2>Documents And Correspondence</h2>
                     </div>
@@ -1714,6 +1860,7 @@ export default function RegistryPage() {
                   <DataTable columns={obligationLifecycleColumns} rows={selected.obligation_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No obligation lifecycle events recorded" />
                   <DataTable columns={assessmentLifecycleColumns} rows={selected.assessment_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No assessment lifecycle events recorded" />
                   <DataTable columns={reviewLifecycleColumns} rows={selected.review_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No review lifecycle events recorded" />
+                  <DataTable columns={licenceLifecycleColumns} rows={selected.licence_lifecycle_events || []} keyField="licence_lifecycle_event_uid" empty="No licence lifecycle events recorded" />
                 </div>
 
                 <div className="registry-record-panel">
