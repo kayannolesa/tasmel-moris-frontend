@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   BadgeDollarSign,
   BadgeCheck,
+  Banknote,
   BookOpenCheck,
   Building2,
   CalendarClock,
@@ -21,6 +22,7 @@ import {
   Scale,
   UserRound,
   UsersRound,
+  WalletCards,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -200,6 +202,13 @@ function clearanceTone(state) {
   return "neutral";
 }
 
+function financeTone(state) {
+  if (["ALLOCATED", "PAID", "APPROVED", "RESOLVED", "POSTED"].includes(state)) return "success";
+  if (["REQUESTED", "OPEN", "DRAFT"].includes(state)) return "warning";
+  if (["REVERSED", "REJECTED", "CANCELLED"].includes(state)) return "danger";
+  return "neutral";
+}
+
 function DuplicatePanel({ candidates, acknowledged, onAcknowledged }) {
   if (!candidates?.length) {
     return (
@@ -289,6 +298,10 @@ export default function RegistryPage() {
   const postedLiabilities = selected?.liability_notices?.filter((notice) => notice.liability_state_cd === "POSTED") || [];
   const latestClearance = selected?.clearance_snapshots?.[0] || null;
   const openLiabilityTotal = openLiabilities.reduce((total, notice) => total + Number(notice.net_liability_amt || 0), 0);
+  const accountBalanceTotal = selected?.account_summaries?.reduce((total, account) => total + Number(account.balance_amt || 0), 0) || 0;
+  const receiptTotal = selected?.receipts?.reduce((total, receipt) => total + Number(receipt.total_received_amt || 0), 0) || 0;
+  const openSuspenseItems = selected?.suspense_items?.filter((item) => item.suspense_state_cd === "OPEN") || [];
+  const pendingRefunds = selected?.refunds?.filter((refund) => ["REQUESTED", "APPROVED"].includes(refund.refund_state_cd)) || [];
 
   const subjectOptions = useMemo(
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
@@ -615,6 +628,53 @@ export default function RegistryPage() {
       key: "clearance_state_cd",
       label: "State",
       render: (row) => <StatusPill tone={clearanceTone(row.clearance_state_cd)}>{compactCode(row.clearance_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const accountSummaryColumns = [
+    { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
+    { key: "component_name", label: "Component", render: (row) => row.component_name || "-" },
+    { key: "debit_total_amt", label: "Debit", render: (row) => formatMoney(row.debit_total_amt || 0) },
+    { key: "credit_total_amt", label: "Credit", render: (row) => formatMoney(row.credit_total_amt || 0) },
+    { key: "balance_amt", label: "Balance", render: (row) => formatMoney(row.balance_amt || 0) },
+    { key: "last_posting_ts", label: "Last posting", render: (row) => formatDateTime(row.last_posting_ts) },
+  ];
+
+  const receiptColumns = [
+    { key: "receipt_no", label: "Receipt" },
+    { key: "received_ts", label: "Received", render: (row) => formatDateTime(row.received_ts) },
+    { key: "total_received_amt", label: "Received", render: (row) => formatMoney(row.total_received_amt || 0) },
+    { key: "allocated_amt", label: "Allocated", render: (row) => formatMoney(row.allocated_amt || 0) },
+    { key: "suspense_amt", label: "Suspense", render: (row) => formatMoney(row.suspense_amt || 0) },
+    {
+      key: "receipt_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={financeTone(row.receipt_state_cd)}>{compactCode(row.receipt_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const suspenseColumns = [
+    { key: "suspense_no", label: "Suspense" },
+    { key: "receipt_no", label: "Receipt", render: (row) => row.receipt_no || "-" },
+    { key: "suspense_amt", label: "Amount", render: (row) => formatMoney(row.suspense_amt || 0) },
+    { key: "allocated_amt", label: "Allocated", render: (row) => formatMoney(row.allocated_amt || 0) },
+    { key: "suspense_reason_txt", label: "Reason", render: (row) => row.suspense_reason_txt || "-" },
+    {
+      key: "suspense_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={financeTone(row.suspense_state_cd)}>{compactCode(row.suspense_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const refundColumns = [
+    { key: "refund_request_no", label: "Refund" },
+    { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
+    { key: "requested_amt", label: "Requested", render: (row) => formatMoney(row.requested_amt || 0) },
+    { key: "approved_amt", label: "Approved", render: (row) => formatMoney(row.approved_amt || 0) },
+    {
+      key: "refund_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={financeTone(row.refund_state_cd)}>{compactCode(row.refund_state_cd)}</StatusPill>,
     },
   ];
 
@@ -988,6 +1048,22 @@ export default function RegistryPage() {
                   <span>Clearance</span>
                   <strong>{latestClearance ? compactCode(latestClearance.clearance_state_cd) : "-"}</strong>
                 </div>
+                <div>
+                  <span>Account balance</span>
+                  <strong>{formatMoney(accountBalanceTotal)}</strong>
+                </div>
+                <div>
+                  <span>Receipt total</span>
+                  <strong>{formatMoney(receiptTotal)}</strong>
+                </div>
+                <div>
+                  <span>Open suspense</span>
+                  <strong>{formatNumber(openSuspenseItems.length)}</strong>
+                </div>
+                <div>
+                  <span>Pending refunds</span>
+                  <strong>{formatNumber(pendingRefunds.length)}</strong>
+                </div>
               </div>
             ) : (
               <EmptyRegistryState title="No taxpayer selected" text="Choose a taxpayer from search results to open the full profile." />
@@ -1068,6 +1144,16 @@ export default function RegistryPage() {
                       <span>Clearance</span>
                       <strong>{latestClearance ? compactCode(latestClearance.clearance_state_cd) : "-"}</strong>
                     </div>
+                    <div className="registry-operational-item">
+                      <Banknote size={18} />
+                      <span>Balance</span>
+                      <strong>{formatMoney(accountBalanceTotal)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <WalletCards size={18} />
+                      <span>Suspense</span>
+                      <strong>{formatNumber(openSuspenseItems.length)}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -1124,6 +1210,30 @@ export default function RegistryPage() {
                     <ReceiptText size={20} />
                   </div>
                   <DataTable columns={clearanceColumns} rows={selected.clearance_snapshots || []} keyField="clearance_snapshot_uid" empty="No clearance snapshots recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Finance position</span>
+                      <h2>Account Balances And Receipts</h2>
+                    </div>
+                    <Banknote size={20} />
+                  </div>
+                  <DataTable columns={accountSummaryColumns} rows={selected.account_summaries || []} keyField="account_summary_uid" empty="No account summaries recorded" />
+                  <DataTable columns={receiptColumns} rows={selected.receipts || []} keyField="receipt_event_uid" empty="No receipts recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Financial controls</span>
+                      <h2>Suspense And Refunds</h2>
+                    </div>
+                    <WalletCards size={20} />
+                  </div>
+                  <DataTable columns={suspenseColumns} rows={selected.suspense_items || []} keyField="suspense_item_uid" empty="No suspense items recorded" />
+                  <DataTable columns={refundColumns} rows={selected.refunds || []} keyField="refund_request_uid" empty="No refund requests recorded" />
                 </div>
 
                 <div className="registry-record-panel">

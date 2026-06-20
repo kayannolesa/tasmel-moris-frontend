@@ -1700,6 +1700,88 @@ a {
   font-weight: 800;
 }
 
+.finance-receipt-grid,
+.finance-allocation-grid,
+.finance-ledger-grid,
+.finance-refund-grid,
+.finance-control-grid {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+.finance-receipt-grid,
+.finance-allocation-grid,
+.finance-refund-grid,
+.finance-control-grid {
+  grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1.35fr);
+}
+
+.finance-ledger-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.finance-receipt-form,
+.finance-filter-form,
+.finance-control-form {
+  display: grid;
+  gap: 14px;
+}
+
+.finance-receipt-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.finance-filter-form,
+.finance-control-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.finance-receipt-form .full-span,
+.finance-filter-form .full-span,
+.finance-control-form .full-span {
+  grid-column: 1 / -1;
+}
+
+.finance-detail-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfd;
+}
+
+.finance-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.finance-summary-strip > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.finance-summary-strip span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.finance-summary-strip strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+}
+
 .split-list {
   display: grid;
   gap: 12px;
@@ -1837,7 +1919,12 @@ a {
   .assessment-workbench-grid,
   .assessment-create-grid,
   .assessment-adjustment-grid,
-  .assessment-clearance-grid {
+  .assessment-clearance-grid,
+  .finance-receipt-grid,
+  .finance-allocation-grid,
+  .finance-ledger-grid,
+  .finance-refund-grid,
+  .finance-control-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
       "directory"
@@ -1860,7 +1947,12 @@ a {
   .assessment-workbench-grid,
   .assessment-create-grid,
   .assessment-adjustment-grid,
-  .assessment-clearance-grid {
+  .assessment-clearance-grid,
+  .finance-receipt-grid,
+  .finance-allocation-grid,
+  .finance-ledger-grid,
+  .finance-refund-grid,
+  .finance-control-grid {
     grid-template-areas: none;
   }
 
@@ -1894,7 +1986,8 @@ a {
   .filing-summary-strip,
   .assessment-summary-strip,
   .assessment-totals,
-  .assessment-detail-grid {
+  .assessment-detail-grid,
+  .finance-summary-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1980,7 +2073,10 @@ a {
     .assessment-filter-form,
     .assessment-create-form,
     .assessment-component-form,
-    .assessment-component-row {
+    .assessment-component-row,
+    .finance-receipt-form,
+    .finance-filter-form,
+    .finance-control-form {
     grid-template-columns: 1fr;
   }
 }
@@ -2028,7 +2124,8 @@ a {
   .filing-summary-strip,
   .assessment-summary-strip,
   .assessment-totals,
-  .assessment-detail-grid {
+  .assessment-detail-grid,
+  .finance-summary-strip {
     grid-template-columns: 1fr;
   }
 
