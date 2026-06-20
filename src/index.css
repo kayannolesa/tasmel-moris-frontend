@@ -1886,6 +1886,116 @@ a {
   gap: 16px;
 }
 
+.workflow-decision-grid,
+.workflow-task-grid,
+.workflow-engine-grid,
+.workflow-admin-grid {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+.workflow-decision-grid,
+.workflow-task-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+}
+
+.workflow-engine-grid,
+.workflow-admin-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workflow-decision-grid__detail,
+.workflow-task-grid__all,
+.workflow-admin-grid__table {
+  grid-column: 1 / -1;
+}
+
+.workflow-sticky-panel {
+  position: sticky;
+  top: 92px;
+}
+
+.workflow-two-column-form,
+.workflow-filter-form {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.workflow-two-column-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workflow-filter-form {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+}
+
+.workflow-two-column-form .field:has(textarea),
+.workflow-two-column-form > .check-control,
+.workflow-two-column-form > .secondary-button,
+.workflow-two-column-form > .primary-button {
+  grid-column: 1 / -1;
+}
+
+.workflow-approval-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #c7d9dc;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f8fbfb 0%, #eef8f6 100%);
+}
+
+.workflow-approval-card span,
+.workflow-approval-card small,
+.workflow-summary-strip span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.workflow-approval-card strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.workflow-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.workflow-summary-strip > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.workflow-summary-strip strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.workflow-decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.workflow-detail-stack {
+  display: grid;
+  gap: 16px;
+}
+
 .split-list {
   display: grid;
   gap: 12px;
@@ -2033,7 +2143,11 @@ a {
   .collections-matter-grid,
   .collections-ops-grid,
   .collections-enforcement-grid,
-  .collections-review-grid {
+  .collections-review-grid,
+  .workflow-decision-grid,
+  .workflow-task-grid,
+  .workflow-engine-grid,
+  .workflow-admin-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
       "directory"
@@ -2066,7 +2180,11 @@ a {
   .collections-matter-grid,
   .collections-ops-grid,
   .collections-enforcement-grid,
-  .collections-review-grid {
+  .collections-review-grid,
+  .workflow-decision-grid,
+  .workflow-task-grid,
+  .workflow-engine-grid,
+  .workflow-admin-grid {
     grid-template-areas: none;
   }
 
@@ -2092,7 +2210,8 @@ a {
 
   .assessment-workbench-grid__detail,
   .assessment-create-side,
-  .collections-sticky-panel {
+  .collections-sticky-panel,
+  .workflow-sticky-panel {
     position: static;
   }
 
@@ -2103,7 +2222,8 @@ a {
   .assessment-totals,
   .assessment-detail-grid,
   .finance-summary-strip,
-  .collections-summary-strip {
+  .collections-summary-strip,
+  .workflow-summary-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2194,7 +2314,9 @@ a {
     .finance-filter-form,
     .finance-control-form,
     .collections-filter-form,
-    .collections-two-column-form {
+    .collections-two-column-form,
+    .workflow-two-column-form,
+    .workflow-filter-form {
     grid-template-columns: 1fr;
   }
 }
@@ -2244,7 +2366,8 @@ a {
   .assessment-totals,
   .assessment-detail-grid,
   .finance-summary-strip,
-  .collections-summary-strip {
+  .collections-summary-strip,
+  .workflow-summary-strip {
     grid-template-columns: 1fr;
   }
 
