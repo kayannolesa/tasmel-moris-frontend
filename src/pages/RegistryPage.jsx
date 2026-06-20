@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarClock,
   ContactRound,
+  FileCheck2,
   Fingerprint,
   History,
   Hand,
@@ -176,6 +177,13 @@ function holdTone(state) {
   return "neutral";
 }
 
+function declarationTone(state) {
+  if (state === "ACCEPTED" || state === "VALIDATED") return "success";
+  if (state === "REQUIRES_REVIEW" || state === "SUBMITTED") return "warning";
+  if (state === "REJECTED") return "danger";
+  return "neutral";
+}
+
 function DuplicatePanel({ candidates, acknowledged, onAcknowledged }) {
   if (!candidates?.length) {
     return (
@@ -260,6 +268,7 @@ export default function RegistryPage() {
   const activeHolds = selected?.account_holds?.filter((hold) => hold.hold_state_cd === "ACTIVE") || [];
   const openDues = selected?.due_instances?.filter((due) => ["OPEN", "NOTIFIED", "OVERDUE"].includes(due.due_state_cd)) || [];
   const activeConcessions = selected?.concessions?.filter((concession) => concession.concession_state_cd === "ACTIVE") || [];
+  const acceptedDeclarations = selected?.declarations?.filter((declaration) => declaration.declaration_state_cd === "ACCEPTED") || [];
 
   const subjectOptions = useMemo(
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
@@ -528,6 +537,31 @@ export default function RegistryPage() {
       key: "due_state_cd",
       label: "State",
       render: (row) => <StatusPill tone={dueTone(row.due_state_cd)}>{compactCode(row.due_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const declarationColumns = [
+    { key: "declaration_no", label: "Declaration" },
+    { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "-" },
+    { key: "period_label_txt", label: "Period", render: (row) => row.period_label_txt || "-" },
+    { key: "due_dt", label: "Due date", render: (row) => formatDate(row.due_dt) },
+    { key: "declared_total_amt", label: "Declared", render: (row) => formatMoney(row.declared_total_amt || 0) },
+    {
+      key: "declaration_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={declarationTone(row.declaration_state_cd)}>{compactCode(row.declaration_state_cd)}</StatusPill>,
+    },
+    {
+      key: "validation",
+      label: "Validation",
+      render: (row) =>
+        Number(row.open_error_count || 0) ? (
+          <StatusPill tone="danger">{formatNumber(row.open_error_count)} errors</StatusPill>
+        ) : Number(row.open_warning_count || 0) ? (
+          <StatusPill tone="warning">{formatNumber(row.open_warning_count)} warnings</StatusPill>
+        ) : (
+          <StatusPill tone="success">Clear</StatusPill>
+        ),
     },
   ];
 
@@ -873,6 +907,10 @@ export default function RegistryPage() {
                   <span>Concessions</span>
                   <strong>{formatNumber(activeConcessions.length)}</strong>
                 </div>
+                <div>
+                  <span>Accepted filings</span>
+                  <strong>{formatNumber(acceptedDeclarations.length)}</strong>
+                </div>
               </div>
             ) : (
               <EmptyRegistryState title="No taxpayer selected" text="Choose a taxpayer from search results to open the full profile." />
@@ -938,6 +976,11 @@ export default function RegistryPage() {
                       <span>Active concessions</span>
                       <strong>{formatNumber(activeConcessions.length)}</strong>
                     </div>
+                    <div className="registry-operational-item">
+                      <FileCheck2 size={18} />
+                      <span>Accepted filings</span>
+                      <strong>{formatNumber(acceptedDeclarations.length)}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -961,6 +1004,17 @@ export default function RegistryPage() {
                     <CalendarClock size={20} />
                   </div>
                   <DataTable columns={obligationDueColumns} rows={selected.due_instances || []} keyField="due_instance_uid" empty="No obligation due dates generated" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Filing history</span>
+                      <h2>Declarations And Validation Status</h2>
+                    </div>
+                    <FileCheck2 size={20} />
+                  </div>
+                  <DataTable columns={declarationColumns} rows={selected.declarations || []} keyField="declaration_uid" empty="No declarations recorded" />
                 </div>
 
                 <div className="registry-record-panel">
