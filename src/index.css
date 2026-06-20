@@ -2006,6 +2006,52 @@ a {
   align-items: start;
 }
 
+.compliance-workbench-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.7fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.compliance-workbench-grid__main {
+  min-width: 0;
+}
+
+.compliance-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(150px, 0.35fr) minmax(130px, 0.28fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.inline-action-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.secondary-button--compact {
+  min-height: 34px;
+  padding: 0 11px;
+  font-size: 12px;
+}
+
+.compliance-subject-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #c7d9dc;
+  border-radius: 8px;
+  background: #f4fbfa;
+  color: var(--teal-dark);
+  font-size: 13px;
+  font-weight: 850;
+}
+
 .document-two-column-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2214,12 +2260,17 @@ a {
   .document-repository-grid,
   .document-generation-grid,
   .document-message-grid,
-  .document-template-grid {
+  .document-template-grid,
+  .compliance-workbench-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
       "directory"
       "detail"
       "create";
+  }
+
+  .compliance-filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .role-verification-grid {
@@ -2388,7 +2439,8 @@ a {
     .collections-two-column-form,
     .workflow-two-column-form,
     .workflow-filter-form,
-    .document-two-column-form {
+    .document-two-column-form,
+    .compliance-filter-bar {
     grid-template-columns: 1fr;
   }
 }

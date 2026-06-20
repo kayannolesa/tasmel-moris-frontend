@@ -220,6 +220,13 @@ function recoveryTone(state) {
   return "neutral";
 }
 
+function complianceTone(state) {
+  if (["LOW", "CLOSED", "COMPLETED", "ACCEPTED", "RESOLVED", "SATISFIED"].includes(state)) return "success";
+  if (["MEDIUM", "NORMAL", "OPEN", "DRAFT", "PLANNED", "ISSUED", "LODGED", "QUEUED", "IN_PROGRESS"].includes(state)) return "warning";
+  if (["HIGH", "CRITICAL", "URGENT", "RESTRICTED", "ESCALATED", "REJECTED"].includes(state)) return "danger";
+  return "neutral";
+}
+
 function DuplicatePanel({ candidates, acknowledged, onAcknowledged }) {
   if (!candidates?.length) {
     return (
@@ -318,6 +325,11 @@ export default function RegistryPage() {
   const activeInstalmentPlans = selected?.instalment_plans?.filter((plan) => ["PROPOSED", "APPROVED", "ACTIVE", "DEFAULTED"].includes(plan.plan_state_cd)) || [];
   const missedInstalments = selected?.instalment_lines?.filter((line) => line.line_state_cd === "MISSED") || [];
   const recoveryBalanceTotal = activeRecoveryMatters.reduce((total, matter) => total + Number(matter.balance_amt || 0), 0);
+  const elevatedRiskProfiles = selected?.risk_profiles?.filter((profile) => ["HIGH", "CRITICAL"].includes(profile.risk_rating_cd)) || [];
+  const openComplianceActions = selected?.compliance_actions?.filter((action) => ["OPEN", "ASSIGNED", "IN_PROGRESS", "ESCALATED"].includes(action.action_state_cd)) || [];
+  const openAudits = selected?.audit_engagements?.filter((audit) => ["PLANNED", "OPEN", "IN_PROGRESS"].includes(audit.audit_state_cd)) || [];
+  const openInvestigations = selected?.investigations?.filter((investigation) => ["OPEN", "UNDER_REVIEW", "ESCALATED"].includes(investigation.investigation_state_cd)) || [];
+  const openInformationRequests = selected?.information_requests?.filter((request) => ["DRAFT", "ISSUED"].includes(request.request_state_cd)) || [];
 
   const subjectOptions = useMemo(
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
@@ -798,6 +810,76 @@ export default function RegistryPage() {
     { key: "message_state_cd", label: "State", render: (row) => <StatusPill tone={row.message_state_cd === "READ" || row.message_state_cd === "DELIVERED" || row.message_state_cd === "SENT" ? "success" : "warning"}>{compactCode(row.message_state_cd)}</StatusPill> },
   ];
 
+  const riskProfileColumns = [
+    { key: "risk_scope_cd", label: "Scope", render: (row) => compactCode(row.risk_scope_cd) },
+    { key: "risk_score_no", label: "Score", render: (row) => formatNumber(row.risk_score_no) },
+    { key: "signal_count", label: "Signals", render: (row) => formatNumber(row.signal_count) },
+    { key: "queue_state_cd", label: "Queue", render: (row) => <StatusPill tone={complianceTone(row.queue_state_cd)}>{compactCode(row.queue_state_cd)}</StatusPill> },
+    { key: "risk_rating_cd", label: "Rating", render: (row) => <StatusPill tone={complianceTone(row.risk_rating_cd)}>{compactCode(row.risk_rating_cd)}</StatusPill> },
+  ];
+
+  const riskSignalColumns = [
+    { key: "signal_name", label: "Signal" },
+    { key: "signal_group_cd", label: "Group", render: (row) => compactCode(row.signal_group_cd || row.signal_source_cd) },
+    { key: "signal_weight_no", label: "Weight", render: (row) => formatNumber(row.signal_weight_no) },
+    { key: "signal_value_txt", label: "Value", render: (row) => row.signal_value_txt || "-" },
+  ];
+
+  const compliancePlanColumns = [
+    { key: "plan_name", label: "Plan" },
+    { key: "priority_cd", label: "Priority", render: (row) => <StatusPill tone={complianceTone(row.priority_cd)}>{compactCode(row.priority_cd)}</StatusPill> },
+    { key: "target_completion_dt", label: "Target", render: (row) => formatDate(row.target_completion_dt || row.end_dt) },
+    { key: "plan_state_cd", label: "State", render: (row) => <StatusPill tone={complianceTone(row.plan_state_cd)}>{compactCode(row.plan_state_cd)}</StatusPill> },
+  ];
+
+  const complianceActionColumns = [
+    { key: "action_no", label: "Action" },
+    { key: "plan_name", label: "Plan", render: (row) => row.plan_name || "-" },
+    { key: "action_type_cd", label: "Type", render: (row) => compactCode(row.action_type_cd) },
+    { key: "due_dt", label: "Due", render: (row) => formatDate(row.due_dt) },
+    { key: "action_state_cd", label: "State", render: (row) => <StatusPill tone={complianceTone(row.action_state_cd)}>{compactCode(row.action_state_cd)}</StatusPill> },
+  ];
+
+  const complianceAuditColumns = [
+    { key: "audit_no", label: "Audit" },
+    { key: "scope_txt", label: "Scope", render: (row) => row.scope_txt || "-" },
+    { key: "start_dt", label: "Start", render: (row) => formatDate(row.start_dt) },
+    { key: "lead_name", label: "Lead", render: (row) => row.lead_name || "-" },
+    { key: "audit_state_cd", label: "State", render: (row) => <StatusPill tone={complianceTone(row.audit_state_cd)}>{compactCode(row.audit_state_cd)}</StatusPill> },
+  ];
+
+  const informationRequestColumns = [
+    { key: "request_no", label: "Request" },
+    { key: "request_type_cd", label: "Type", render: (row) => compactCode(row.request_type_cd) },
+    { key: "due_dt", label: "Due", render: (row) => formatDate(row.due_dt) },
+    { key: "response_document_no", label: "Response", render: (row) => row.response_document_no || "-" },
+    { key: "request_state_cd", label: "State", render: (row) => <StatusPill tone={complianceTone(row.request_state_cd)}>{compactCode(row.request_state_cd)}</StatusPill> },
+  ];
+
+  const investigationColumns = [
+    { key: "investigation_no", label: "Investigation" },
+    { key: "investigation_type_cd", label: "Type", render: (row) => compactCode(row.investigation_type_cd) },
+    { key: "restriction_level_cd", label: "Restriction", render: (row) => compactCode(row.restriction_level_cd) },
+    { key: "lead_name", label: "Lead", render: (row) => row.lead_name || "-" },
+    { key: "investigation_state_cd", label: "State", render: (row) => <StatusPill tone={complianceTone(row.investigation_state_cd)}>{compactCode(row.investigation_state_cd)}</StatusPill> },
+  ];
+
+  const evidenceColumns = [
+    { key: "evidence_no", label: "Evidence" },
+    { key: "investigation_no", label: "Case", render: (row) => row.investigation_no || row.audit_no || "-" },
+    { key: "evidence_type_cd", label: "Type", render: (row) => compactCode(row.evidence_type_cd) },
+    { key: "file_name_txt", label: "Document", render: (row) => row.file_name_txt || row.content_no || "-" },
+    { key: "custody_state_cd", label: "Custody", render: (row) => <StatusPill tone={complianceTone(row.custody_state_cd)}>{compactCode(row.custody_state_cd)}</StatusPill> },
+  ];
+
+  const disclosureColumns = [
+    { key: "disclosure_no", label: "Disclosure" },
+    { key: "estimated_liability_amt", label: "Estimate", render: (row) => formatMoney(row.estimated_liability_amt) },
+    { key: "assessed_liability_amt", label: "Assessed", render: (row) => formatMoney(row.assessed_liability_amt) },
+    { key: "relief_decision_cd", label: "Relief", render: (row) => compactCode(row.relief_decision_cd) },
+    { key: "disclosure_state_cd", label: "State", render: (row) => <StatusPill tone={complianceTone(row.disclosure_state_cd)}>{compactCode(row.disclosure_state_cd)}</StatusPill> },
+  ];
+
   const accountHoldColumns = [
     { key: "hold_type_cd", label: "Type", render: (row) => compactCode(row.hold_type_cd) },
     { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
@@ -1212,6 +1294,30 @@ export default function RegistryPage() {
                   <span>Messages</span>
                   <strong>{formatNumber(selected.messages?.length)}</strong>
                 </div>
+                <div>
+                  <span>Risk profiles</span>
+                  <strong>{formatNumber(selected.risk_profiles?.length)}</strong>
+                </div>
+                <div>
+                  <span>Elevated risk</span>
+                  <strong>{formatNumber(elevatedRiskProfiles.length)}</strong>
+                </div>
+                <div>
+                  <span>Compliance actions</span>
+                  <strong>{formatNumber(openComplianceActions.length)}</strong>
+                </div>
+                <div>
+                  <span>Open audits</span>
+                  <strong>{formatNumber(openAudits.length)}</strong>
+                </div>
+                <div>
+                  <span>Investigations</span>
+                  <strong>{formatNumber(openInvestigations.length)}</strong>
+                </div>
+                <div>
+                  <span>Info requests</span>
+                  <strong>{formatNumber(openInformationRequests.length)}</strong>
+                </div>
               </div>
             ) : (
               <EmptyRegistryState title="No taxpayer selected" text="Choose a taxpayer from search results to open the full profile." />
@@ -1316,6 +1422,26 @@ export default function RegistryPage() {
                       <CalendarClock size={18} />
                       <span>Instalments</span>
                       <strong>{formatNumber(activeInstalmentPlans.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <AlertTriangle size={18} />
+                      <span>Elevated risk</span>
+                      <strong>{formatNumber(elevatedRiskProfiles.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <ShieldAlert size={18} />
+                      <span>Compliance actions</span>
+                      <strong>{formatNumber(openComplianceActions.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <Gavel size={18} />
+                      <span>Open audits</span>
+                      <strong>{formatNumber(openAudits.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <FileText size={18} />
+                      <span>Evidence</span>
+                      <strong>{formatNumber(selected.evidence_records?.length)}</strong>
                     </div>
                   </div>
                 </div>
@@ -1457,6 +1583,35 @@ export default function RegistryPage() {
                   </div>
                   <DataTable columns={documentColumns} rows={selected.documents || []} keyField="content_record_uid" empty="No official documents recorded" />
                   <DataTable columns={messageColumns} rows={selected.messages || []} keyField="message_envelope_uid" empty="No correspondence recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Compliance risk</span>
+                      <h2>Risk Profiles, Signals And Plans</h2>
+                    </div>
+                    <AlertTriangle size={20} />
+                  </div>
+                  <DataTable columns={riskProfileColumns} rows={selected.risk_profiles || []} keyField="risk_profile_uid" empty="No compliance risk profiles recorded" />
+                  <DataTable columns={riskSignalColumns} rows={selected.risk_signals || []} keyField="risk_signal_uid" empty="No risk signals recorded" />
+                  <DataTable columns={compliancePlanColumns} rows={selected.compliance_plans || []} keyField="compliance_plan_uid" empty="No compliance plans recorded" />
+                  <DataTable columns={complianceActionColumns} rows={selected.compliance_actions || []} keyField="compliance_action_uid" empty="No compliance actions recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Audit and investigation</span>
+                      <h2>Requests, Evidence And Disclosures</h2>
+                    </div>
+                    <Gavel size={20} />
+                  </div>
+                  <DataTable columns={complianceAuditColumns} rows={selected.audit_engagements || []} keyField="audit_engagement_uid" empty="No audit engagements recorded" />
+                  <DataTable columns={informationRequestColumns} rows={selected.information_requests || []} keyField="information_request_uid" empty="No information requests recorded" />
+                  <DataTable columns={investigationColumns} rows={selected.investigations || []} keyField="investigation_file_uid" empty="No investigations recorded" />
+                  <DataTable columns={evidenceColumns} rows={selected.evidence_records || []} keyField="evidence_uid" empty="No evidence records registered" />
+                  <DataTable columns={disclosureColumns} rows={selected.voluntary_disclosures || []} keyField="disclosure_uid" empty="No voluntary disclosures recorded" />
                 </div>
 
                 <div className="registry-record-panel">
