@@ -17,6 +17,7 @@ import {
   Scale,
   Settings2,
   ShieldCheck,
+  Database,
   UserCircle,
   UsersRound,
   X,
@@ -42,6 +43,8 @@ const navItems = [
   { to: "/licensing", label: "Licensing", icon: BadgeCheck },
   { to: "/portal", label: "Digital Services", icon: Monitor },
   { to: "/integrations", label: "Integrations", icon: Plug },
+  { to: "/reporting", label: "Reporting", icon: FileCheck2 },
+  { to: "/migration", label: "Data Quality", icon: Database },
   { to: "/account", label: "Account", icon: UserCircle },
 ];
 

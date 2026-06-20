@@ -1,4 +1,4 @@
-import { BadgeCheck, BadgeDollarSign, Building2, FileCheck2, FolderArchive, Gavel, GitPullRequestArrow, ListChecks, Monitor, Plug, Scale, Settings2, ShieldCheck, UsersRound } from "lucide-react";
+import { BadgeCheck, BadgeDollarSign, Building2, Database, FileCheck2, FolderArchive, Gavel, GitPullRequestArrow, ListChecks, Monitor, Plug, Scale, Settings2, ShieldCheck, UsersRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MetricTile, PageHeader } from "../components/common/WorkspacePrimitives.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -20,7 +20,9 @@ export default function DashboardPage() {
     filing: null,
     integrations: null,
     licensing: null,
+    migration: null,
     portal: null,
+    reporting: null,
     registry: null,
     workflow: null,
   });
@@ -45,6 +47,8 @@ export default function DashboardPage() {
         licensing,
         portal,
         integrations,
+        reporting,
+        migration,
       ] = await Promise.allSettled([
         apiRequest("/api/admin/overview"),
         apiRequest("/api/configuration/overview"),
@@ -61,6 +65,8 @@ export default function DashboardPage() {
         apiRequest("/api/licensing/overview"),
         apiRequest("/api/portal/overview"),
         apiRequest("/api/integrations/overview"),
+        apiRequest("/api/reporting/overview"),
+        apiRequest("/api/migration/overview"),
       ]);
 
       if (!active) return;
@@ -77,7 +83,9 @@ export default function DashboardPage() {
         filing: filing.status === "fulfilled" ? filing.value.overview : null,
         integrations: integrations.status === "fulfilled" ? integrations.value.overview : null,
         licensing: licensing.status === "fulfilled" ? licensing.value.overview : null,
+        migration: migration.status === "fulfilled" ? migration.value.overview : null,
         portal: portal.status === "fulfilled" ? portal.value.overview : null,
+        reporting: reporting.status === "fulfilled" ? reporting.value.overview : null,
         registry: registry.status === "fulfilled" ? registry.value.page : null,
         workflow: workflow.status === "fulfilled" ? workflow.value.overview : null,
       });
@@ -147,8 +155,15 @@ export default function DashboardPage() {
       <div className="metric-grid">
         <MetricTile icon={Building2} label="Staff profiles" value={formatNumber(data.admin?.staff_count)} />
         <MetricTile icon={ShieldCheck} label="Role memberships" value={formatNumber(data.admin?.role_membership_count)} />
+        <MetricTile icon={FileCheck2} label="Operational reports" value={formatNumber(data.reporting?.report_definition_count)} sublabel={`${formatNumber(data.reporting?.metric_definition_count)} KPIs`} />
+        <MetricTile icon={Database} label="Data quality issues" value={formatNumber(data.migration?.open_quality_issue_count)} sublabel={`${formatNumber(data.migration?.source_register_count)} sources`} />
+      </div>
+
+      <div className="metric-grid">
         <MetricTile icon={FolderArchive} label="Document records" value={formatNumber(data.documents?.content_count)} />
+        <MetricTile icon={FileCheck2} label="Validation items" value={formatNumber(data.filing?.unresolved_validation_count)} />
         <MetricTile icon={Plug} label="Open integration exceptions" value={formatNumber(data.integrations?.open_exception_count)} sublabel={`${formatNumber(data.integrations?.message_count)} exchange messages`} />
+        <MetricTile icon={Database} label="Dashboard data marts" value={formatNumber(data.reporting?.data_mart_count)} />
       </div>
     </section>
   );

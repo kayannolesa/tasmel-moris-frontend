@@ -15,10 +15,12 @@ import FilingPage from "../pages/FilingPage.jsx";
 import IntegrationsPage from "../pages/IntegrationsPage.jsx";
 import LicensingPage from "../pages/LicensingPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
+import MigrationQualityPage from "../pages/MigrationQualityPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import ObligationsPage from "../pages/ObligationsPage.jsx";
 import PortalServicesPage from "../pages/PortalServicesPage.jsx";
 import RegistryPage from "../pages/RegistryPage.jsx";
+import ReportingPage from "../pages/ReportingPage.jsx";
 import UnauthorizedPage from "../pages/UnauthorizedPage.jsx";
 import WorkflowPage from "../pages/WorkflowPage.jsx";
 
@@ -74,6 +76,8 @@ export default function AppRouter() {
         <Route path="licensing" element={<LicensingPage />} />
         <Route path="portal" element={<PortalServicesPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
+        <Route path="reporting" element={<ReportingPage />} />
+        <Route path="migration" element={<MigrationQualityPage />} />
         <Route path="account" element={<AccountPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />
       </Route>
