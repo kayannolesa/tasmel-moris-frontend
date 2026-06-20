@@ -419,6 +419,7 @@ a {
   display: grid;
   gap: 6px;
   padding: 10px 12px;
+  overflow-y: auto;
 }
 
 .workspace-nav__item {
