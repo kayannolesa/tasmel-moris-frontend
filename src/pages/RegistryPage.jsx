@@ -1,6 +1,7 @@
 import {
   Activity,
   AlertTriangle,
+  BadgeDollarSign,
   BadgeCheck,
   BookOpenCheck,
   Building2,
@@ -14,8 +15,10 @@ import {
   Link2,
   MapPin,
   Plus,
+  ReceiptText,
   Search,
   ShieldCheck,
+  Scale,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -184,6 +187,19 @@ function declarationTone(state) {
   return "neutral";
 }
 
+function liabilityTone(state) {
+  if (state === "POSTED" || state === "ISSUED" || state === "APPROVED") return "success";
+  if (state === "CANCELLED") return "danger";
+  if (state === "DRAFT" || state === "REVIEWED") return "warning";
+  return "neutral";
+}
+
+function clearanceTone(state) {
+  if (state === "CLEAR") return "success";
+  if (state === "NOT_CLEAR") return "danger";
+  return "neutral";
+}
+
 function DuplicatePanel({ candidates, acknowledged, onAcknowledged }) {
   if (!candidates?.length) {
     return (
@@ -269,6 +285,10 @@ export default function RegistryPage() {
   const openDues = selected?.due_instances?.filter((due) => ["OPEN", "NOTIFIED", "OVERDUE"].includes(due.due_state_cd)) || [];
   const activeConcessions = selected?.concessions?.filter((concession) => concession.concession_state_cd === "ACTIVE") || [];
   const acceptedDeclarations = selected?.declarations?.filter((declaration) => declaration.declaration_state_cd === "ACCEPTED") || [];
+  const openLiabilities = selected?.liability_notices?.filter((notice) => !["POSTED", "CANCELLED", "AMENDED"].includes(notice.liability_state_cd)) || [];
+  const postedLiabilities = selected?.liability_notices?.filter((notice) => notice.liability_state_cd === "POSTED") || [];
+  const latestClearance = selected?.clearance_snapshots?.[0] || null;
+  const openLiabilityTotal = openLiabilities.reduce((total, notice) => total + Number(notice.net_liability_amt || 0), 0);
 
   const subjectOptions = useMemo(
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
@@ -565,6 +585,39 @@ export default function RegistryPage() {
     },
   ];
 
+  const liabilityNoticeColumns = [
+    { key: "liability_notice_no", label: "Notice" },
+    { key: "declaration_no", label: "Declaration", render: (row) => row.declaration_no || "-" },
+    { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "-" },
+    { key: "period_label_txt", label: "Period", render: (row) => row.period_label_txt || "-" },
+    { key: "net_liability_amt", label: "Net liability", render: (row) => formatMoney(row.net_liability_amt || 0) },
+    { key: "due_dt", label: "Due date", render: (row) => formatDate(row.due_dt) },
+    {
+      key: "liability_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={liabilityTone(row.liability_state_cd)}>{compactCode(row.liability_state_cd)}</StatusPill>,
+    },
+    {
+      key: "posting_ready_bool",
+      label: "Posting",
+      render: (row) => <StatusPill tone={row.posting_ready_bool ? "success" : "neutral"}>{row.posting_ready_bool ? "Ready" : "Held"}</StatusPill>,
+    },
+  ];
+
+  const clearanceColumns = [
+    { key: "snapshot_ts", label: "Snapshot", render: (row) => formatDateTime(row.snapshot_ts) },
+    { key: "outstanding_balance_amt", label: "Balance", render: (row) => formatMoney(row.outstanding_balance_amt || 0) },
+    { key: "overdue_count_no", label: "Overdue", render: (row) => formatNumber(row.overdue_count_no) },
+    { key: "active_hold_count_no", label: "Holds", render: (row) => formatNumber(row.active_hold_count_no) },
+    { key: "open_liability_count_no", label: "Open liabilities", render: (row) => formatNumber(row.open_liability_count_no) },
+    { key: "pending_dispute_count_no", label: "Disputes", render: (row) => formatNumber(row.pending_dispute_count_no) },
+    {
+      key: "clearance_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={clearanceTone(row.clearance_state_cd)}>{compactCode(row.clearance_state_cd)}</StatusPill>,
+    },
+  ];
+
   const accountHoldColumns = [
     { key: "hold_type_cd", label: "Type", render: (row) => compactCode(row.hold_type_cd) },
     { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
@@ -594,6 +647,14 @@ export default function RegistryPage() {
     { key: "event_ts", label: "Time", render: (row) => formatDateTime(row.event_ts) },
     { key: "event_type_cd", label: "Event", render: (row) => compactCode(row.event_type_cd) },
     { key: "event_reason_txt", label: "Reason", render: (row) => row.event_reason_txt || "-" },
+    { key: "created_by_name_txt", label: "Officer", render: (row) => row.created_by_name_txt || "-" },
+  ];
+
+  const assessmentLifecycleColumns = [
+    { key: "event_ts", label: "Time", render: (row) => formatDateTime(row.event_ts) },
+    { key: "event_type_cd", label: "Event", render: (row) => compactCode(row.event_type_cd) },
+    { key: "from_liability_state_cd", label: "From", render: (row) => compactCode(row.from_liability_state_cd) },
+    { key: "to_liability_state_cd", label: "To", render: (row) => compactCode(row.to_liability_state_cd) },
     { key: "created_by_name_txt", label: "Officer", render: (row) => row.created_by_name_txt || "-" },
   ];
 
@@ -911,6 +972,22 @@ export default function RegistryPage() {
                   <span>Accepted filings</span>
                   <strong>{formatNumber(acceptedDeclarations.length)}</strong>
                 </div>
+                <div>
+                  <span>Open liabilities</span>
+                  <strong>{formatNumber(openLiabilities.length)}</strong>
+                </div>
+                <div>
+                  <span>Open liability value</span>
+                  <strong>{formatMoney(openLiabilityTotal)}</strong>
+                </div>
+                <div>
+                  <span>Posted notices</span>
+                  <strong>{formatNumber(postedLiabilities.length)}</strong>
+                </div>
+                <div>
+                  <span>Clearance</span>
+                  <strong>{latestClearance ? compactCode(latestClearance.clearance_state_cd) : "-"}</strong>
+                </div>
               </div>
             ) : (
               <EmptyRegistryState title="No taxpayer selected" text="Choose a taxpayer from search results to open the full profile." />
@@ -981,6 +1058,16 @@ export default function RegistryPage() {
                       <span>Accepted filings</span>
                       <strong>{formatNumber(acceptedDeclarations.length)}</strong>
                     </div>
+                    <div className="registry-operational-item">
+                      <BadgeDollarSign size={18} />
+                      <span>Open liabilities</span>
+                      <strong>{formatNumber(openLiabilities.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <ReceiptText size={18} />
+                      <span>Clearance</span>
+                      <strong>{latestClearance ? compactCode(latestClearance.clearance_state_cd) : "-"}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -1020,6 +1107,28 @@ export default function RegistryPage() {
                 <div className="registry-record-panel">
                   <div className="section-heading section-heading--compact">
                     <div>
+                      <span>Assessment and liability</span>
+                      <h2>Notices And Liability Totals</h2>
+                    </div>
+                    <Scale size={20} />
+                  </div>
+                  <DataTable columns={liabilityNoticeColumns} rows={selected.liability_notices || []} keyField="liability_notice_uid" empty="No liability notices recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Clearance position</span>
+                      <h2>Open Liabilities, Holds And Disputes</h2>
+                    </div>
+                    <ReceiptText size={20} />
+                  </div>
+                  <DataTable columns={clearanceColumns} rows={selected.clearance_snapshots || []} keyField="clearance_snapshot_uid" empty="No clearance snapshots recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
                       <span>Controls</span>
                       <h2>Holds And Concessions</h2>
                     </div>
@@ -1038,6 +1147,7 @@ export default function RegistryPage() {
                     <History size={20} />
                   </div>
                   <DataTable columns={obligationLifecycleColumns} rows={selected.obligation_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No obligation lifecycle events recorded" />
+                  <DataTable columns={assessmentLifecycleColumns} rows={selected.assessment_lifecycle_events || []} keyField="lifecycle_event_uid" empty="No assessment lifecycle events recorded" />
                 </div>
 
                 <div className="registry-record-panel">

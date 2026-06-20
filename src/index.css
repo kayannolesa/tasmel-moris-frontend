@@ -1346,7 +1346,7 @@ a {
 
 .registry-operational-overview {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
 }
 
@@ -1513,6 +1513,193 @@ a {
   overflow-wrap: anywhere;
 }
 
+.assessment-workbench-grid,
+.assessment-create-grid,
+.assessment-adjustment-grid,
+.assessment-clearance-grid {
+  display: grid;
+  gap: 18px;
+  align-items: start;
+}
+
+.assessment-workbench-grid {
+  grid-template-columns: minmax(320px, 0.78fr) minmax(0, 1.42fr);
+}
+
+.assessment-create-grid,
+.assessment-adjustment-grid,
+.assessment-clearance-grid {
+  grid-template-columns: minmax(0, 1.24fr) minmax(300px, 0.76fr);
+}
+
+.assessment-workbench-grid__detail,
+.assessment-create-side {
+  position: sticky;
+  top: 96px;
+}
+
+.assessment-filter-form,
+.assessment-create-form,
+.assessment-component-form {
+  display: grid;
+  gap: 14px;
+}
+
+.assessment-filter-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.assessment-filter-form .full-span,
+.assessment-create-form .full-span {
+  grid-column: 1 / -1;
+}
+
+.assessment-create-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.assessment-summary-strip,
+.assessment-totals {
+  display: grid;
+  gap: 10px;
+}
+
+.assessment-summary-strip {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.assessment-summary-strip > div,
+.assessment-totals span,
+.assessment-totals strong {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.assessment-summary-strip span,
+.assessment-totals span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.assessment-summary-strip strong,
+.assessment-totals strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.assessment-action-row,
+.table-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.assessment-action-row {
+  margin-bottom: 16px;
+}
+
+.assessment-action-row button,
+.assessment-component-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.danger-button {
+  border-color: rgba(180, 35, 24, 0.24);
+  color: var(--danger);
+  background: #fff7f6;
+}
+
+.danger-button:hover {
+  background: #fee4e2;
+}
+
+.assessment-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.assessment-panel,
+.assessment-component-builder {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfd;
+}
+
+.assessment-component-form {
+  grid-template-columns: minmax(150px, 0.7fr) minmax(150px, 0.9fr) minmax(120px, 0.55fr) minmax(160px, 1fr) auto;
+  align-items: end;
+  margin-top: 14px;
+}
+
+.assessment-component-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.72fr) minmax(160px, 0.9fr) minmax(120px, 0.5fr) minmax(160px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid #d7e6e6;
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.assessment-totals {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.assessment-ready-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.assessment-ready-list button {
+  width: 100%;
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  color: var(--ink);
+  text-align: left;
+}
+
+.assessment-ready-list button:hover {
+  border-color: rgba(15, 118, 110, 0.34);
+  background: #f2fbfa;
+}
+
+.assessment-ready-list strong {
+  font-size: 13px;
+}
+
+.assessment-ready-list span,
+.assessment-ready-list small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .split-list {
   display: grid;
   gap: 12px;
@@ -1643,10 +1830,14 @@ a {
   .security-grid,
   .role-verification-grid,
   .registry-search-grid,
-  .registry-registration-grid,
-  .obligation-workbench-grid,
-  .filing-workbench-grid,
-  .declaration-detail-grid {
+    .registry-registration-grid,
+    .obligation-workbench-grid,
+    .filing-workbench-grid,
+  .declaration-detail-grid,
+  .assessment-workbench-grid,
+  .assessment-create-grid,
+  .assessment-adjustment-grid,
+  .assessment-clearance-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
       "directory"
@@ -1662,10 +1853,14 @@ a {
   }
 
   .registry-search-grid,
-  .registry-registration-grid,
-  .obligation-workbench-grid,
-  .filing-workbench-grid,
-  .declaration-detail-grid {
+    .registry-registration-grid,
+    .obligation-workbench-grid,
+    .filing-workbench-grid,
+  .declaration-detail-grid,
+  .assessment-workbench-grid,
+  .assessment-create-grid,
+  .assessment-adjustment-grid,
+  .assessment-clearance-grid {
     grid-template-areas: none;
   }
 
@@ -1689,9 +1884,17 @@ a {
     position: static;
   }
 
+  .assessment-workbench-grid__detail,
+  .assessment-create-side {
+    position: static;
+  }
+
   .obligation-snapshot-cards,
   .registry-operational-overview,
-  .filing-summary-strip {
+  .filing-summary-strip,
+  .assessment-summary-strip,
+  .assessment-totals,
+  .assessment-detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1773,7 +1976,11 @@ a {
     .obligation-filter-form,
     .registry-create-form,
     .registry-profile-card,
-    .filing-item-card {
+    .filing-item-card,
+    .assessment-filter-form,
+    .assessment-create-form,
+    .assessment-component-form,
+    .assessment-component-row {
     grid-template-columns: 1fr;
   }
 }
@@ -1818,7 +2025,10 @@ a {
   .module-grid,
   .obligation-snapshot-cards,
   .registry-operational-overview,
-  .filing-summary-strip {
+  .filing-summary-strip,
+  .assessment-summary-strip,
+  .assessment-totals,
+  .assessment-detail-grid {
     grid-template-columns: 1fr;
   }
 
