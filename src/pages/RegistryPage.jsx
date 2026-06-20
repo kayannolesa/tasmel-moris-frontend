@@ -10,6 +10,7 @@ import {
   ContactRound,
   FileCheck2,
   Fingerprint,
+  Gavel,
   History,
   Hand,
   Landmark,
@@ -18,6 +19,7 @@ import {
   Plus,
   ReceiptText,
   Search,
+  ShieldAlert,
   ShieldCheck,
   Scale,
   UserRound,
@@ -209,6 +211,13 @@ function financeTone(state) {
   return "neutral";
 }
 
+function recoveryTone(state) {
+  if (["CLOSED", "COMPLETED", "PAID", "LOW", "RELEASED", "APPROVED"].includes(state)) return "success";
+  if (["OPEN", "UNDER_REVIEW", "INSTALMENT", "PENDING", "PROPOSED", "MEDIUM"].includes(state)) return "warning";
+  if (["ENFORCEMENT", "LEGAL", "HIGH", "CRITICAL", "MISSED", "DEFAULTED", "UNRECOVERABLE"].includes(state)) return "danger";
+  return "neutral";
+}
+
 function DuplicatePanel({ candidates, acknowledged, onAcknowledged }) {
   if (!candidates?.length) {
     return (
@@ -302,6 +311,11 @@ export default function RegistryPage() {
   const receiptTotal = selected?.receipts?.reduce((total, receipt) => total + Number(receipt.total_received_amt || 0), 0) || 0;
   const openSuspenseItems = selected?.suspense_items?.filter((item) => item.suspense_state_cd === "OPEN") || [];
   const pendingRefunds = selected?.refunds?.filter((refund) => ["REQUESTED", "APPROVED"].includes(refund.refund_state_cd)) || [];
+  const activeRecoveryMatters = selected?.recovery_matters?.filter((matter) => ["OPEN", "UNDER_REVIEW", "INSTALMENT", "ENFORCEMENT", "LEGAL"].includes(matter.matter_state_cd)) || [];
+  const activeEnforcementMeasures = selected?.enforcement_measures?.filter((measure) => ["PENDING", "APPROVED", "ACTIVE"].includes(measure.measure_state_cd)) || [];
+  const activeInstalmentPlans = selected?.instalment_plans?.filter((plan) => ["PROPOSED", "APPROVED", "ACTIVE", "DEFAULTED"].includes(plan.plan_state_cd)) || [];
+  const missedInstalments = selected?.instalment_lines?.filter((line) => line.line_state_cd === "MISSED") || [];
+  const recoveryBalanceTotal = activeRecoveryMatters.reduce((total, matter) => total + Number(matter.balance_amt || 0), 0);
 
   const subjectOptions = useMemo(
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
@@ -676,6 +690,92 @@ export default function RegistryPage() {
       label: "State",
       render: (row) => <StatusPill tone={financeTone(row.refund_state_cd)}>{compactCode(row.refund_state_cd)}</StatusPill>,
     },
+  ];
+
+  const recoveryMatterColumns = [
+    { key: "recovery_matter_no", label: "Matter" },
+    { key: "revenue_kind_name", label: "Revenue type", render: (row) => row.revenue_kind_name || "All revenue" },
+    { key: "liability_notice_no", label: "Notice", render: (row) => row.liability_notice_no || "-" },
+    { key: "balance_amt", label: "Balance", render: (row) => formatMoney(row.balance_amt || 0) },
+    { key: "overdue_days_no", label: "Overdue", render: (row) => `${formatNumber(row.overdue_days_no)} days` },
+    {
+      key: "priority_cd",
+      label: "Priority",
+      render: (row) => <StatusPill tone={recoveryTone(row.priority_cd)}>{compactCode(row.priority_cd)}</StatusPill>,
+    },
+    {
+      key: "matter_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={recoveryTone(row.matter_state_cd)}>{compactCode(row.matter_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const recoveryActionColumns = [
+    { key: "recovery_matter_no", label: "Matter" },
+    { key: "action_type_cd", label: "Action", render: (row) => compactCode(row.action_type_cd) },
+    { key: "scheduled_dt", label: "Scheduled", render: (row) => formatDate(row.scheduled_dt) },
+    { key: "assigned_name", label: "Officer", render: (row) => row.assigned_name || "-" },
+    { key: "outcome_cd", label: "Outcome", render: (row) => row.outcome_cd ? compactCode(row.outcome_cd) : "-" },
+    {
+      key: "action_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={recoveryTone(row.action_state_cd)}>{compactCode(row.action_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const instalmentPlanColumns = [
+    { key: "plan_no", label: "Plan" },
+    { key: "recovery_matter_no", label: "Matter", render: (row) => row.recovery_matter_no || "-" },
+    { key: "total_plan_amt", label: "Amount", render: (row) => formatMoney(row.total_plan_amt || 0) },
+    { key: "next_due_dt", label: "Next due", render: (row) => formatDate(row.next_due_dt) },
+    { key: "missed_instalment_count_no", label: "Missed", render: (row) => formatNumber(row.missed_instalment_count_no) },
+    {
+      key: "plan_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={recoveryTone(row.plan_state_cd)}>{compactCode(row.plan_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const enforcementColumns = [
+    { key: "recovery_matter_no", label: "Matter" },
+    { key: "measure_type_cd", label: "Measure", render: (row) => compactCode(row.measure_type_cd) },
+    { key: "restriction_scope_cd", label: "Scope", render: (row) => row.restriction_scope_cd ? compactCode(row.restriction_scope_cd) : "-" },
+    { key: "amount_secured_amt", label: "Secured", render: (row) => formatMoney(row.amount_secured_amt || 0) },
+    {
+      key: "approval_state_cd",
+      label: "Approval",
+      render: (row) => <StatusPill tone={recoveryTone(row.approval_state_cd)}>{compactCode(row.approval_state_cd)}</StatusPill>,
+    },
+    {
+      key: "measure_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={recoveryTone(row.measure_state_cd)}>{compactCode(row.measure_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const legalReferralColumns = [
+    { key: "referral_no", label: "Referral" },
+    { key: "recovery_matter_no", label: "Matter" },
+    { key: "referred_to_txt", label: "Referred to" },
+    { key: "legal_case_reference_txt", label: "Case reference", render: (row) => row.legal_case_reference_txt || row.solicitor_reference_txt || "-" },
+    { key: "next_hearing_dt", label: "Next hearing", render: (row) => formatDate(row.next_hearing_dt) },
+    {
+      key: "referral_state_cd",
+      label: "State",
+      render: (row) => <StatusPill tone={recoveryTone(row.referral_state_cd)}>{compactCode(row.referral_state_cd)}</StatusPill>,
+    },
+  ];
+
+  const collectabilityColumns = [
+    { key: "recovery_matter_no", label: "Matter" },
+    { key: "review_dt", label: "Review", render: (row) => formatDate(row.review_dt) },
+    {
+      key: "collectability_cd",
+      label: "Collectability",
+      render: (row) => <StatusPill tone={recoveryTone(row.collectability_cd)}>{compactCode(row.collectability_cd)}</StatusPill>,
+    },
+    { key: "recommended_action_cd", label: "Recommendation", render: (row) => row.recommended_action_cd ? compactCode(row.recommended_action_cd) : "-" },
+    { key: "reviewed_by_name", label: "Officer", render: (row) => row.reviewed_by_name || "-" },
   ];
 
   const accountHoldColumns = [
@@ -1064,6 +1164,26 @@ export default function RegistryPage() {
                   <span>Pending refunds</span>
                   <strong>{formatNumber(pendingRefunds.length)}</strong>
                 </div>
+                <div>
+                  <span>Active recovery</span>
+                  <strong>{formatNumber(activeRecoveryMatters.length)}</strong>
+                </div>
+                <div>
+                  <span>Recovery balance</span>
+                  <strong>{formatMoney(recoveryBalanceTotal)}</strong>
+                </div>
+                <div>
+                  <span>Enforcement</span>
+                  <strong>{formatNumber(activeEnforcementMeasures.length)}</strong>
+                </div>
+                <div>
+                  <span>Instalment plans</span>
+                  <strong>{formatNumber(activeInstalmentPlans.length)}</strong>
+                </div>
+                <div>
+                  <span>Missed instalments</span>
+                  <strong>{formatNumber(missedInstalments.length)}</strong>
+                </div>
               </div>
             ) : (
               <EmptyRegistryState title="No taxpayer selected" text="Choose a taxpayer from search results to open the full profile." />
@@ -1154,6 +1274,21 @@ export default function RegistryPage() {
                       <span>Suspense</span>
                       <strong>{formatNumber(openSuspenseItems.length)}</strong>
                     </div>
+                    <div className="registry-operational-item">
+                      <Gavel size={18} />
+                      <span>Recovery</span>
+                      <strong>{formatNumber(activeRecoveryMatters.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <ShieldAlert size={18} />
+                      <span>Enforcement</span>
+                      <strong>{formatNumber(activeEnforcementMeasures.length)}</strong>
+                    </div>
+                    <div className="registry-operational-item">
+                      <CalendarClock size={18} />
+                      <span>Instalments</span>
+                      <strong>{formatNumber(activeInstalmentPlans.length)}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -1234,6 +1369,42 @@ export default function RegistryPage() {
                   </div>
                   <DataTable columns={suspenseColumns} rows={selected.suspense_items || []} keyField="suspense_item_uid" empty="No suspense items recorded" />
                   <DataTable columns={refundColumns} rows={selected.refunds || []} keyField="refund_request_uid" empty="No refund requests recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Collections position</span>
+                      <h2>Recovery Matters And Actions</h2>
+                    </div>
+                    <Gavel size={20} />
+                  </div>
+                  <DataTable columns={recoveryMatterColumns} rows={selected.recovery_matters || []} keyField="recovery_matter_uid" empty="No recovery matters recorded" />
+                  <DataTable columns={recoveryActionColumns} rows={selected.recovery_actions || []} keyField="recovery_action_uid" empty="No recovery actions recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Recovery arrangements</span>
+                      <h2>Instalments, Enforcement And Legal</h2>
+                    </div>
+                    <ShieldAlert size={20} />
+                  </div>
+                  <DataTable columns={instalmentPlanColumns} rows={selected.instalment_plans || []} keyField="instalment_plan_uid" empty="No instalment plans recorded" />
+                  <DataTable columns={enforcementColumns} rows={selected.enforcement_measures || []} keyField="enforcement_measure_uid" empty="No enforcement measures recorded" />
+                  <DataTable columns={legalReferralColumns} rows={selected.legal_referrals || []} keyField="legal_referral_uid" empty="No legal referrals recorded" />
+                </div>
+
+                <div className="registry-record-panel">
+                  <div className="section-heading section-heading--compact">
+                    <div>
+                      <span>Recoverability</span>
+                      <h2>Collectability Reviews</h2>
+                    </div>
+                    <Landmark size={20} />
+                  </div>
+                  <DataTable columns={collectabilityColumns} rows={selected.collectability_reviews || []} keyField="collectability_review_uid" empty="No collectability reviews recorded" />
                 </div>
 
                 <div className="registry-record-panel">
