@@ -58,15 +58,19 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const changePassword = useCallback(async ({ currentPassword, newPassword }) => {
-    await apiRequest("/api/auth/change-password", {
-      method: "PATCH",
-      body: {
-        currentPassword,
-        newPassword,
-      },
-    });
-  }, []);
+  const changePassword = useCallback(
+    async ({ currentPassword, newPassword }) => {
+      await apiRequest("/api/auth/change-password", {
+        method: "PATCH",
+        body: {
+          currentPassword,
+          newPassword,
+        },
+      });
+      return refresh();
+    },
+    [refresh]
+  );
 
   const hasPermission = useCallback(
     (resource, action) => {
@@ -86,6 +90,7 @@ export function AuthProvider({ children }) {
       actor,
       status,
       isAuthenticated: status === "authenticated",
+      requiresPasswordChange: Boolean(actor?.password_reset_required_bool),
       changePassword,
       hasPermission,
       login,

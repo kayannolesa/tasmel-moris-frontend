@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import WorkspaceLayout from "../layouts/WorkspaceLayout.jsx";
 import AccountPage from "../pages/AccountPage.jsx";
+import ActivateAccountPage from "../pages/ActivateAccountPage.jsx";
 import AdminPage from "../pages/AdminPage.jsx";
 import AssessmentPage from "../pages/AssessmentPage.jsx";
 import CollectionsPage from "../pages/CollectionsPage.jsx";
@@ -33,7 +34,7 @@ function LoadingScreen() {
   );
 }
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowPasswordChange = false }) {
   const auth = useAuth();
   const location = useLocation();
 
@@ -45,6 +46,14 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  if (auth.requiresPasswordChange && !allowPasswordChange) {
+    return <Navigate to="/activate-account" replace state={{ from: location }} />;
+  }
+
+  if (!auth.requiresPasswordChange && allowPasswordChange) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }
 
@@ -52,6 +61,14 @@ export default function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/activate-account"
+        element={
+          <ProtectedRoute allowPasswordChange>
+            <ActivateAccountPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/"
         element={

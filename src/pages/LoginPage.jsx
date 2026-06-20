@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { apiRequest, getApiBaseUrl } from "../services/api.js";
+import { apiRequest } from "../services/api.js";
 
 export default function LoginPage() {
   const auth = useAuth();
@@ -34,7 +34,7 @@ export default function LoginPage() {
   }, []);
 
   if (auth.isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={auth.requiresPasswordChange ? "/activate-account" : "/"} replace />;
   }
 
   async function handleSubmit(event) {
@@ -42,8 +42,8 @@ export default function LoginPage() {
     setError("");
     setStatus("submitting");
     try {
-      await auth.login(form);
-      navigate(location.state?.from?.pathname || "/", { replace: true });
+      const actor = await auth.login(form);
+      navigate(actor?.password_reset_required_bool ? "/activate-account" : location.state?.from?.pathname || "/", { replace: true });
     } catch (submitError) {
       setError(submitError.message || "Sign in failed.");
     } finally {
@@ -70,8 +70,8 @@ export default function LoginPage() {
           </div>
           <div className="login-assurance">
             <span><ShieldCheck size={16} /> Role controlled</span>
-            <span><ServerCog size={16} /> Render live</span>
-            <span><CheckCircle2 size={16} /> PostgreSQL connected</span>
+            <span><ServerCog size={16} /> Secure sessions</span>
+            <span><CheckCircle2 size={16} /> Audit recorded</span>
           </div>
         </div>
 
@@ -114,11 +114,6 @@ export default function LoginPage() {
             <span>{status === "submitting" ? "Signing in" : "Sign in"}</span>
             <ArrowRight size={18} />
           </button>
-
-          <div className="login-form__meta">
-            <span>API</span>
-            <strong>{getApiBaseUrl() || "Not configured"}</strong>
-          </div>
         </form>
       </section>
     </main>
