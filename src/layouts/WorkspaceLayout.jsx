@@ -1,13 +1,15 @@
 import {
-  BarChart3,
   Building2,
   ChevronLeft,
+  FileCheck2,
   LayoutDashboard,
   LogOut,
   Menu,
-  ServerCog,
-  ShieldCheck,
+  Landmark,
+  ListChecks,
+  Settings2,
   UserCircle,
+  UsersRound,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -16,9 +18,11 @@ import { useAuth } from "../context/AuthContext.jsx";
 
 const navItems = [
   { to: "/", label: "Command", icon: LayoutDashboard, end: true },
-  { to: "/system", label: "System", icon: ServerCog },
-  { to: "/security", label: "Security", icon: ShieldCheck },
-  { to: "/modules", label: "Modules", icon: BarChart3 },
+  { to: "/admin", label: "Administration", icon: Settings2 },
+  { to: "/registry", label: "Registry", icon: UsersRound },
+  { to: "/configuration", label: "Configuration", icon: Landmark },
+  { to: "/obligations", label: "Obligations", icon: ListChecks },
+  { to: "/filing", label: "Filing", icon: FileCheck2 },
   { to: "/account", label: "Account", icon: UserCircle },
 ];
 

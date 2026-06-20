@@ -2,12 +2,14 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import WorkspaceLayout from "../layouts/WorkspaceLayout.jsx";
 import AccountPage from "../pages/AccountPage.jsx";
+import AdminPage from "../pages/AdminPage.jsx";
+import ConfigurationPage from "../pages/ConfigurationPage.jsx";
 import DashboardPage from "../pages/DashboardPage.jsx";
+import FilingPage from "../pages/FilingPage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
-import ModulesPage from "../pages/ModulesPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
-import SecurityPage from "../pages/SecurityPage.jsx";
-import SystemPage from "../pages/SystemPage.jsx";
+import ObligationsPage from "../pages/ObligationsPage.jsx";
+import RegistryPage from "../pages/RegistryPage.jsx";
 import UnauthorizedPage from "../pages/UnauthorizedPage.jsx";
 
 function LoadingScreen() {
@@ -47,9 +49,11 @@ export default function AppRouter() {
         }
       >
         <Route index element={<DashboardPage />} />
-        <Route path="system" element={<SystemPage />} />
-        <Route path="security" element={<SecurityPage />} />
-        <Route path="modules" element={<ModulesPage />} />
+        <Route path="admin" element={<AdminPage />} />
+        <Route path="registry" element={<RegistryPage />} />
+        <Route path="configuration" element={<ConfigurationPage />} />
+        <Route path="obligations" element={<ObligationsPage />} />
+        <Route path="filing" element={<FilingPage />} />
         <Route path="account" element={<AccountPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />
       </Route>
