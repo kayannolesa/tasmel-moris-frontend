@@ -22,6 +22,7 @@ import {
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
+import ObligationGovernancePanel from "../components/governance/ObligationGovernancePanel.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
 
@@ -29,6 +30,7 @@ const tabs = [
   { id: "workbench", label: "Obligation Workbench" },
   { id: "enrolment", label: "Revenue Enrolment" },
   { id: "controls", label: "Holds And Concessions" },
+  { id: "corrections", label: "Correction Governance" },
   { id: "snapshot", label: "Taxpayer Snapshot" },
 ];
 
@@ -670,6 +672,8 @@ export default function ObligationsPage() {
           </section>
         </div>
       ) : null}
+
+      {activeTab === "corrections" ? <ObligationGovernancePanel /> : null}
 
       {activeTab === "snapshot" ? (
         <div className="obligation-snapshot-grid">

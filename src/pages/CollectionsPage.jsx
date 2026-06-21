@@ -24,6 +24,7 @@ import {
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
+import CollectionsGovernancePanel from "../components/governance/CollectionsGovernancePanel.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
 
@@ -33,6 +34,7 @@ const tabs = [
   { id: "plans", label: "Actions And Plans" },
   { id: "enforcement", label: "Enforcement And Legal" },
   { id: "review", label: "Collectability Review" },
+  { id: "governance", label: "Correction Governance" },
 ];
 
 const matterStates = ["OPEN", "UNDER_REVIEW", "INSTALMENT", "ENFORCEMENT", "LEGAL", "CLOSED"];
@@ -924,6 +926,8 @@ export default function CollectionsPage() {
           </section>
         </div>
       ) : null}
+
+      {activeTab === "governance" ? <CollectionsGovernancePanel /> : null}
 
       {activeTab === "review" ? (
         <div className="collections-review-grid">

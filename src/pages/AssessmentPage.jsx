@@ -22,6 +22,7 @@ import {
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
+import AssessmentGovernancePanel from "../components/governance/AssessmentGovernancePanel.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
 
@@ -30,6 +31,7 @@ const tabs = [
   { id: "create", label: "Create Notice" },
   { id: "adjustments", label: "Adjustments" },
   { id: "clearance", label: "Clearance" },
+  { id: "governance", label: "Correction Governance" },
 ];
 
 const creditComponentTypes = new Set(["CREDIT", "CONCESSION", "EXEMPTION", "ADJUSTMENT_CREDIT"]);
@@ -871,6 +873,8 @@ export default function AssessmentPage() {
           </section>
         </div>
       ) : null}
+
+      {activeTab === "governance" ? <AssessmentGovernancePanel /> : null}
 
       {activeTab === "clearance" ? (
         <div className="assessment-clearance-grid">

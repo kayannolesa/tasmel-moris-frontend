@@ -21,6 +21,7 @@ import {
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
+import FilingGovernancePanel from "../components/governance/FilingGovernancePanel.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
 
@@ -29,6 +30,7 @@ const tabs = [
   { id: "lodge", label: "Lodge Declaration" },
   { id: "detail", label: "Review Detail" },
   { id: "amend", label: "Amendments" },
+  { id: "corrections", label: "Correction Governance" },
 ];
 
 const initialFilters = {
@@ -727,6 +729,8 @@ export default function FilingPage() {
           </section>
         </div>
       ) : null}
+
+      {activeTab === "corrections" ? <FilingGovernancePanel /> : null}
 
       {activeTab === "amend" ? (
         <div className="module-workbench">

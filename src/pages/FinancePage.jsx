@@ -22,6 +22,7 @@ import {
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
+import FinanceGovernancePanel from "../components/governance/FinanceGovernancePanel.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
 
@@ -31,6 +32,7 @@ const tabs = [
   { id: "ledger", label: "Accounts And Journals" },
   { id: "refunds", label: "Refunds" },
   { id: "controls", label: "Reconciliation And Close" },
+  { id: "governance", label: "Correction Governance" },
 ];
 
 function today() {
@@ -841,6 +843,8 @@ export default function FinancePage() {
           </section>
         </div>
       ) : null}
+
+      {activeTab === "governance" ? <FinanceGovernancePanel /> : null}
 
       {activeTab === "controls" ? (
         <div className="finance-control-grid">
