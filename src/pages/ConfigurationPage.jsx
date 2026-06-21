@@ -18,6 +18,7 @@ const tabs = [
   { id: "rules", label: "Rules" },
   { id: "forms", label: "Forms" },
   { id: "rates", label: "Rates And GL" },
+  { id: "lifecycle", label: "Lifecycle" },
 ];
 
 const initialKind = {
@@ -40,6 +41,20 @@ const initialRate = { revenue_kind_uid: "", schedule_name: "", schedule_code: ""
 const initialBand = { rate_schedule_uid: "", band_seq_no: 1, lower_threshold_amt: "", upper_threshold_amt: "", rate_percent: "", fixed_amt: "" };
 const initialCharge = { revenue_kind_uid: "", revenue_component_uid: "", charge_name: "", charge_code: "", charge_type_cd: "PENALTY", calculation_method_cd: "PERCENTAGE", rate_percent: "", fixed_amt: "", cap_amt: "" };
 const initialGl = { revenue_kind_uid: "", revenue_component_uid: "", event_type_cd: "LIABILITY_POSTED", debit_gl_code: "", credit_gl_code: "", cost_center_code: "", fund_code: "" };
+
+const lifecycleEntities = [
+  { id: "revenue-kinds", label: "Revenue kinds", idKey: "revenue_kind_uid", titleKey: "revenue_kind_name", rows: "revenueKinds" },
+  { id: "components", label: "Components", idKey: "revenue_component_uid", titleKey: "component_name", rows: "components" },
+  { id: "period-rules", label: "Period rules", idKey: "period_rule_uid", titleKey: "period_rule_code", rows: "periodRules" },
+  { id: "due-rules", label: "Due rules", idKey: "due_rule_uid", titleKey: "due_rule_code", rows: "dueRules" },
+  { id: "forms", label: "Forms", idKey: "form_blueprint_uid", titleKey: "form_name", rows: "forms" },
+  { id: "form-items", label: "Form items", idKey: "form_item_uid", titleKey: "item_label_txt", rows: "formItems" },
+  { id: "rate-schedules", label: "Rate schedules", idKey: "rate_schedule_uid", titleKey: "schedule_name", rows: "rateSchedules" },
+  { id: "charges", label: "Charges", idKey: "charge_schedule_uid", titleKey: "charge_name", rows: "charges" },
+  { id: "gl-mappings", label: "GL mappings", idKey: "gl_mapping_uid", titleKey: "event_type_cd", rows: "glMappings" },
+];
+
+const lifecycleInitial = { entity: "revenue-kinds", record_uid: "", lifecycle_state_cd: "APPROVED", effective_to_dt: "", reason_txt: "" };
 
 export default function ConfigurationPage() {
   const [activeTab, setActiveTab] = useState("revenue");
@@ -64,6 +79,7 @@ export default function ConfigurationPage() {
   const [bandForm, setBandForm] = useState(initialBand);
   const [chargeForm, setChargeForm] = useState(initialCharge);
   const [glForm, setGlForm] = useState(initialGl);
+  const [lifecycleForm, setLifecycleForm] = useState(lifecycleInitial);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -126,6 +142,42 @@ export default function ConfigurationPage() {
     );
   }
 
+  const lifecycleData = {
+    revenueKinds,
+    components,
+    periodRules,
+    dueRules,
+    forms,
+    formItems,
+    rateSchedules,
+    charges,
+    glMappings,
+  };
+  const lifecycleEntity = lifecycleEntities.find((entity) => entity.id === lifecycleForm.entity) || lifecycleEntities[0];
+  const lifecycleRows = lifecycleData[lifecycleEntity.rows] || [];
+  const selectedLifecycleRecord = lifecycleRows.find((row) => row[lifecycleEntity.idKey] === lifecycleForm.record_uid) || null;
+
+  async function submitLifecycle(action) {
+    if (!lifecycleForm.record_uid) {
+      setError("Select a configuration record before submitting a lifecycle action.");
+      return;
+    }
+    setError("");
+    setSuccess("");
+    const basePath = `/api/configuration/lifecycle/${lifecycleForm.entity}/${lifecycleForm.record_uid}`;
+    const body = { reason_txt: lifecycleForm.reason_txt, effective_to_dt: lifecycleForm.effective_to_dt || null };
+    try {
+      if (action === "update") {
+        await apiRequest(basePath, { method: "PATCH", body: { ...body, lifecycle_state_cd: lifecycleForm.lifecycle_state_cd } });
+      } else {
+        await apiRequest(`${basePath}/${action}`, { method: "POST", body });
+      }
+      await load();
+      setSuccess(`Configuration ${action} action recorded.`);
+    } catch (lifecycleError) {
+      setError(lifecycleError.message);
+    }
+  }
   const kindColumns = [
     { key: "revenue_kind_name", label: "Revenue kind" },
     { key: "revenue_family_cd", label: "Family", render: (row) => compactCode(row.revenue_family_cd) },
@@ -492,6 +544,75 @@ export default function ConfigurationPage() {
           </section>
         </div>
       ) : null}
+      {activeTab === "lifecycle" ? (
+        <div className="module-workbench">
+          <section className="content-band">
+            <div className="section-heading">
+              <div>
+                <span>Governed lifecycle</span>
+                <h2>Approve, Retire Or Supersede Configuration</h2>
+              </div>
+              <Settings2 size={21} />
+            </div>
+            <form className="action-form" onSubmit={(event) => { event.preventDefault(); void submitLifecycle("update"); }}>
+              <SelectField label="Configuration area" value={lifecycleForm.entity} onChange={(value) => setLifecycleForm({ ...lifecycleInitial, entity: value })}>
+                {lifecycleEntities.map((entity) => <option key={entity.id} value={entity.id}>{entity.label}</option>)}
+              </SelectField>
+              <SelectField label="Configuration record" value={lifecycleForm.record_uid} onChange={(value) => setLifecycleForm({ ...lifecycleForm, record_uid: value })}>
+                <option value="">Select record</option>
+                {lifecycleRows.map((row) => (
+                  <option key={row[lifecycleEntity.idKey]} value={row[lifecycleEntity.idKey]}>
+                    {row[lifecycleEntity.titleKey] || row.revenue_kind_name || row.form_code || row.event_type_cd}
+                  </option>
+                ))}
+              </SelectField>
+              <SelectField label="Lifecycle state" value={lifecycleForm.lifecycle_state_cd} onChange={(value) => setLifecycleForm({ ...lifecycleForm, lifecycle_state_cd: value })}>
+                <option value="DRAFT">Draft</option>
+                <option value="APPROVED">Approved</option>
+                <option value="RETIRED">Retired</option>
+                <option value="SUPERSEDED">Superseded</option>
+              </SelectField>
+              <Field label="Effective to">
+                <input type="date" value={lifecycleForm.effective_to_dt} onChange={(event) => setLifecycleForm({ ...lifecycleForm, effective_to_dt: event.target.value })} />
+              </Field>
+              <Field label="Reason">
+                <textarea required value={lifecycleForm.reason_txt} onChange={(event) => setLifecycleForm({ ...lifecycleForm, reason_txt: event.target.value })} />
+              </Field>
+              <div className="button-row">
+                <button className="secondary-button" type="submit">Save lifecycle state</button>
+                <button className="primary-button" type="button" onClick={() => submitLifecycle("approve")}>Approve</button>
+                <button className="secondary-button" type="button" onClick={() => submitLifecycle("retire")}>Retire</button>
+                <button className="secondary-button" type="button" onClick={() => submitLifecycle("supersede")}>Supersede</button>
+              </div>
+            </form>
+          </section>
+          <section className="content-band">
+            <div className="section-heading">
+              <div>
+                <span>{lifecycleEntity.label}</span>
+                <h2>{selectedLifecycleRecord ? (selectedLifecycleRecord[lifecycleEntity.titleKey] || "Selected record") : "Select a record"}</h2>
+              </div>
+              {selectedLifecycleRecord ? <StatusPill tone={selectedLifecycleRecord.lifecycle_state_cd === "APPROVED" || selectedLifecycleRecord.approval_state_cd === "APPROVED" ? "success" : "warning"}>{compactCode(selectedLifecycleRecord.lifecycle_state_cd || selectedLifecycleRecord.approval_state_cd || selectedLifecycleRecord.record_state_cd)}</StatusPill> : null}
+            </div>
+            {selectedLifecycleRecord ? (
+              <div className="reference-registry-summary">
+                <div><span>Approval</span><strong>{compactCode(selectedLifecycleRecord.approval_state_cd || "Not recorded")}</strong></div>
+                <div><span>Effective from</span><strong>{selectedLifecycleRecord.effective_from_dt || "Not recorded"}</strong></div>
+                <div><span>Effective to</span><strong>{selectedLifecycleRecord.effective_to_dt || "Open ended"}</strong></div>
+                <div><span>Reason</span><strong>{selectedLifecycleRecord.state_reason_txt || "No recent reason"}</strong></div>
+              </div>
+            ) : null}
+            <DataTable columns={[{ key: lifecycleEntity.titleKey, label: "Record", render: (row) => row[lifecycleEntity.titleKey] || row.revenue_kind_name || row.form_code || row.event_type_cd }, { key: "lifecycle_state_cd", label: "Lifecycle", render: (row) => <StatusPill tone={row.lifecycle_state_cd === "APPROVED" ? "success" : "neutral"}>{compactCode(row.lifecycle_state_cd || row.record_state_cd)}</StatusPill> }, { key: "approval_state_cd", label: "Approval", render: (row) => compactCode(row.approval_state_cd || "-") }, { key: "effective_to_dt", label: "Effective to", render: (row) => row.effective_to_dt || "Open" }]} rows={lifecycleRows} keyField={lifecycleEntity.idKey} selectedKey={lifecycleForm.record_uid} onRowClick={(row) => setLifecycleForm({ ...lifecycleForm, record_uid: row[lifecycleEntity.idKey] })} empty="No records in this configuration area" />
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
+
+
+
+
+
+
+

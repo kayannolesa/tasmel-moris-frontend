@@ -28,6 +28,7 @@ const tabs = [
   { id: "tasks", label: "My Tasks" },
   { id: "approvals", label: "Approval Engine" },
   { id: "matters", label: "Matters And Queues" },
+  { id: "configuration", label: "Configuration" },
 ];
 
 const domains = ["ASSESSMENT", "FINANCE", "COLLECTIONS", "COMPLIANCE", "REGISTRY", "SYSTEM"];
@@ -106,6 +107,9 @@ const initialApproval = {
 const initialDecision = { approval_step_uid: "", decision_cd: "APPROVE", comments_txt: "" };
 const initialTaskReassign = { work_task_uid: "", assigned_queue_uid: "", assigned_actor_uid: "", due_ts: "" };
 const initialFilters = { q: "", approval_state_cd: "", business_domain_cd: "" };
+const initialQueueGovernance = { work_queue_uid: "", queue_name: "", business_domain_cd: "ASSESSMENT", agency_unit_uid: "", queue_state_cd: "ACTIVE", reason_txt: "" };
+const initialBlueprintForm = { workflow_name: "", workflow_code: "", business_domain_cd: "ASSESSMENT", workflow_state_cd: "DRAFT", sla_hours_no: "", reason_txt: "" };
+const initialPolicyForm = { policy_type: "routing", policy_name: "", policy_code: "", rule_name: "", rule_code: "", business_domain_cd: "ASSESSMENT", work_queue_uid: "", priority_cd: "NORMAL", requested_action_cd: "", threshold_cd: "STANDARD", reason_txt: "" };
 
 async function safeRequest(path, fallback) {
   try {
@@ -130,6 +134,10 @@ export default function WorkflowPage() {
   const [supervisorQueue, setSupervisorQueue] = useState([]);
   const [selectedApproval, setSelectedApproval] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [workflowBlueprints, setWorkflowBlueprints] = useState([]);
+  const [routingPolicies, setRoutingPolicies] = useState([]);
+  const [approvalPolicies, setApprovalPolicies] = useState([]);
+  const [delegationRules, setDelegationRules] = useState([]);
   const [approvalFilters, setApprovalFilters] = useState(initialFilters);
   const [queueForm, setQueueForm] = useState(initialQueue);
   const [matterForm, setMatterForm] = useState(initialMatter);
@@ -137,6 +145,9 @@ export default function WorkflowPage() {
   const [approvalForm, setApprovalForm] = useState(initialApproval);
   const [decisionForm, setDecisionForm] = useState(initialDecision);
   const [taskReassignForm, setTaskReassignForm] = useState(initialTaskReassign);
+  const [queueGovernanceForm, setQueueGovernanceForm] = useState(initialQueueGovernance);
+  const [blueprintForm, setBlueprintForm] = useState(initialBlueprintForm);
+  const [policyForm, setPolicyForm] = useState(initialPolicyForm);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -184,6 +195,16 @@ export default function WorkflowPage() {
     setMyTasks(myTasksPayload.rows || []);
     setApprovals(approvalsPayload.rows || []);
     setSupervisorQueue(supervisorPayload.rows || []);
+    const [blueprintsPayload, routingPayload, approvalPolicyPayload, delegationPayload] = await Promise.all([
+      safeRequest("/api/workflow/configuration/blueprints", { workflow_blueprints: [] }),
+      safeRequest("/api/workflow/configuration/policies/routing", { rows: [] }),
+      safeRequest("/api/workflow/configuration/policies/approval", { rows: [] }),
+      safeRequest("/api/workflow/configuration/policies/delegation", { rows: [] }),
+    ]);
+    setWorkflowBlueprints(blueprintsPayload.workflow_blueprints || []);
+    setRoutingPolicies(routingPayload.rows || []);
+    setApprovalPolicies(approvalPolicyPayload.rows || []);
+    setDelegationRules(delegationPayload.rows || []);
 
     if (keepApprovalUid) {
       await loadApproval(keepApprovalUid, false);
@@ -243,6 +264,29 @@ export default function WorkflowPage() {
     );
   }
 
+  async function submitWorkflowConfig(path, body, reset, message, method = "POST") {
+    setError("");
+    setSuccess("");
+    try {
+      await apiRequest(path, { method, body });
+      reset?.();
+      await load();
+      setSuccess(message);
+    } catch (configError) {
+      setError(configError.message);
+    }
+  }
+
+  function selectQueueForGovernance(queue) {
+    setQueueGovernanceForm({
+      work_queue_uid: queue.work_queue_uid,
+      queue_name: queue.queue_name || "",
+      business_domain_cd: queue.business_domain_cd || "WORKFLOW",
+      agency_unit_uid: queue.agency_unit_uid || "",
+      queue_state_cd: queue.queue_state_cd || "ACTIVE",
+      reason_txt: "",
+    });
+  }
   function approvalPayload() {
     const steps = [
       {
@@ -737,6 +781,80 @@ export default function WorkflowPage() {
           </section>
         </div>
       ) : null}
+      {activeTab === "configuration" ? (
+        <div className="workflow-admin-grid">
+          <section className="content-band">
+            <div className="section-heading">
+              <div>
+                <span>Queue governance</span>
+                <h2>Update Or Disable Work Queues</h2>
+              </div>
+              <Inbox size={21} />
+            </div>
+            <form className="workflow-two-column-form" onSubmit={(event) => {
+              event.preventDefault();
+              if (!queueGovernanceForm.work_queue_uid) return setError("Select a queue before saving governance changes.");
+              void submitWorkflowConfig(`/api/workflow/queues/${queueGovernanceForm.work_queue_uid}`, { ...queueGovernanceForm, agency_unit_uid: queueGovernanceForm.agency_unit_uid || null }, null, "Queue updated.", "PATCH");
+            }}>
+              <SelectField label="Queue" value={queueGovernanceForm.work_queue_uid} onChange={(value) => {
+                const queue = queues.find((item) => item.work_queue_uid === value);
+                if (queue) selectQueueForGovernance(queue);
+              }}>
+                <option value="">Select queue</option>
+                {queues.map((queue) => <option key={queue.work_queue_uid} value={queue.work_queue_uid}>{queue.queue_name}</option>)}
+              </SelectField>
+              <Field label="Queue name"><input value={queueGovernanceForm.queue_name} onChange={(event) => setQueueGovernanceForm({ ...queueGovernanceForm, queue_name: event.target.value })} /></Field>
+              <SelectField label="Domain" value={queueGovernanceForm.business_domain_cd} onChange={(value) => setQueueGovernanceForm({ ...queueGovernanceForm, business_domain_cd: value })}>{domains.map((domain) => <option key={domain} value={domain}>{compactCode(domain)}</option>)}</SelectField>
+              <SelectField label="Agency unit" value={queueGovernanceForm.agency_unit_uid} onChange={(value) => setQueueGovernanceForm({ ...queueGovernanceForm, agency_unit_uid: value })}><option value="">All units</option>{agencyUnits.map((unit) => <option key={unit.agency_unit_uid} value={unit.agency_unit_uid}>{unit.unit_name}</option>)}</SelectField>
+              <SelectField label="Queue state" value={queueGovernanceForm.queue_state_cd} onChange={(value) => setQueueGovernanceForm({ ...queueGovernanceForm, queue_state_cd: value })}><option value="ACTIVE">Active</option><option value="DISABLED">Disabled</option></SelectField>
+              <Field label="Reason"><textarea required value={queueGovernanceForm.reason_txt} onChange={(event) => setQueueGovernanceForm({ ...queueGovernanceForm, reason_txt: event.target.value })} /></Field>
+              <div className="button-row"><button className="primary-button" type="submit">Save queue</button><button className="secondary-button" type="button" onClick={() => queueGovernanceForm.work_queue_uid && submitWorkflowConfig(`/api/workflow/queues/${queueGovernanceForm.work_queue_uid}/disable`, { ...queueGovernanceForm, reason_txt: queueGovernanceForm.reason_txt || "Queue disabled by workflow administrator." }, null, "Queue disabled.")}>Disable queue</button></div>
+            </form>
+            <DataTable columns={queueColumns} rows={queues} keyField="work_queue_uid" selectedKey={queueGovernanceForm.work_queue_uid} onRowClick={selectQueueForGovernance} empty="No work queues" />
+          </section>
+
+          <section className="content-band">
+            <div className="section-heading"><div><span>Blueprints</span><h2>Workflow Blueprint Catalogue</h2></div><GitPullRequestArrow size={21} /></div>
+            <form className="workflow-two-column-form" onSubmit={(event) => { event.preventDefault(); void submitWorkflowConfig("/api/workflow/configuration/blueprints", { ...blueprintForm, sla_hours_no: blueprintForm.sla_hours_no || null }, () => setBlueprintForm(initialBlueprintForm), "Workflow blueprint saved."); }}>
+              <Field label="Blueprint name"><input required value={blueprintForm.workflow_name} onChange={(event) => setBlueprintForm({ ...blueprintForm, workflow_name: event.target.value })} /></Field>
+              <Field label="Code"><input value={blueprintForm.workflow_code} onChange={(event) => setBlueprintForm({ ...blueprintForm, workflow_code: event.target.value.toUpperCase() })} /></Field>
+              <SelectField label="Domain" value={blueprintForm.business_domain_cd} onChange={(value) => setBlueprintForm({ ...blueprintForm, business_domain_cd: value })}>{domains.map((domain) => <option key={domain} value={domain}>{compactCode(domain)}</option>)}</SelectField>
+              <Field label="SLA hours"><input type="number" value={blueprintForm.sla_hours_no} onChange={(event) => setBlueprintForm({ ...blueprintForm, sla_hours_no: event.target.value })} /></Field>
+              <SelectField label="State" value={blueprintForm.workflow_state_cd} onChange={(value) => setBlueprintForm({ ...blueprintForm, workflow_state_cd: value })}><option value="DRAFT">Draft</option><option value="APPROVED">Approved</option><option value="DISABLED">Disabled</option></SelectField>
+              <Field label="Reason"><textarea value={blueprintForm.reason_txt} onChange={(event) => setBlueprintForm({ ...blueprintForm, reason_txt: event.target.value })} /></Field>
+              <button className="primary-button" type="submit">Create blueprint</button>
+            </form>
+            <DataTable columns={[{ key: "workflow_name", label: "Blueprint" }, { key: "business_domain_cd", label: "Domain", render: (row) => compactCode(row.business_domain_cd) }, { key: "version_no", label: "Version" }, { key: "workflow_state_cd", label: "State", render: (row) => <StatusPill tone={row.workflow_state_cd === "APPROVED" ? "success" : "neutral"}>{compactCode(row.workflow_state_cd)}</StatusPill> }]} rows={workflowBlueprints} keyField="workflow_blueprint_uid" empty="No workflow blueprints" />
+          </section>
+
+          <section className="content-band workflow-admin-grid__table">
+            <div className="section-heading"><div><span>Routing and approvals</span><h2>Reusable Policies And Delegations</h2></div><ShieldCheck size={21} /></div>
+            <form className="workflow-two-column-form" onSubmit={(event) => {
+              event.preventDefault();
+              const type = policyForm.policy_type;
+              const body = type === "delegation" ? { rule_name: policyForm.rule_name || policyForm.policy_name, rule_code: policyForm.rule_code || policyForm.policy_code, business_domain_cd: policyForm.business_domain_cd, delegation_level_cd: policyForm.threshold_cd, rule_state_cd: "ACTIVE", reason_txt: policyForm.reason_txt } : { policy_name: policyForm.policy_name, policy_code: policyForm.policy_code, business_domain_cd: policyForm.business_domain_cd, work_queue_uid: policyForm.work_queue_uid || null, priority_cd: policyForm.priority_cd, requested_action_cd: policyForm.requested_action_cd || null, threshold_cd: policyForm.threshold_cd, policy_state_cd: "DRAFT", reason_txt: policyForm.reason_txt };
+              void submitWorkflowConfig(`/api/workflow/configuration/policies/${type}`, body, () => setPolicyForm(initialPolicyForm), "Workflow policy saved.");
+            }}>
+              <SelectField label="Policy type" value={policyForm.policy_type} onChange={(value) => setPolicyForm({ ...policyForm, policy_type: value })}><option value="routing">Routing policy</option><option value="approval">Approval policy</option><option value="delegation">Delegation rule</option></SelectField>
+              <Field label="Name"><input required value={policyForm.policy_name} onChange={(event) => setPolicyForm({ ...policyForm, policy_name: event.target.value, rule_name: event.target.value })} /></Field>
+              <Field label="Code"><input value={policyForm.policy_code} onChange={(event) => setPolicyForm({ ...policyForm, policy_code: event.target.value.toUpperCase(), rule_code: event.target.value.toUpperCase() })} /></Field>
+              <SelectField label="Domain" value={policyForm.business_domain_cd} onChange={(value) => setPolicyForm({ ...policyForm, business_domain_cd: value })}>{domains.map((domain) => <option key={domain} value={domain}>{compactCode(domain)}</option>)}</SelectField>
+              <SelectField label="Queue" value={policyForm.work_queue_uid} onChange={(value) => setPolicyForm({ ...policyForm, work_queue_uid: value })}><option value="">No queue</option>{queues.map((queue) => <option key={queue.work_queue_uid} value={queue.work_queue_uid}>{queue.queue_name}</option>)}</SelectField>
+              <Field label="Action or threshold"><input value={policyForm.requested_action_cd || policyForm.threshold_cd} onChange={(event) => setPolicyForm({ ...policyForm, requested_action_cd: event.target.value.toUpperCase(), threshold_cd: event.target.value.toUpperCase() })} /></Field>
+              <Field label="Reason"><textarea value={policyForm.reason_txt} onChange={(event) => setPolicyForm({ ...policyForm, reason_txt: event.target.value })} /></Field>
+              <button className="primary-button" type="submit">Create policy</button>
+            </form>
+            <DataTable columns={[{ key: "policy_name", label: "Routing policy", render: (row) => row.policy_name }, { key: "business_domain_cd", label: "Domain", render: (row) => compactCode(row.business_domain_cd) }, { key: "policy_state_cd", label: "State", render: (row) => compactCode(row.policy_state_cd) }]} rows={routingPolicies} keyField="routing_policy_uid" empty="No routing policies" />
+            <br />
+            <DataTable columns={[{ key: "policy_name", label: "Approval policy" }, { key: "requested_action_cd", label: "Action", render: (row) => compactCode(row.requested_action_cd) }, { key: "policy_state_cd", label: "State", render: (row) => compactCode(row.policy_state_cd) }]} rows={approvalPolicies} keyField="approval_policy_uid" empty="No approval policies" />
+            <br />
+            <DataTable columns={[{ key: "rule_name", label: "Delegation" }, { key: "business_domain_cd", label: "Domain", render: (row) => compactCode(row.business_domain_cd) }, { key: "rule_state_cd", label: "State", render: (row) => compactCode(row.rule_state_cd) }]} rows={delegationRules} keyField="delegation_rule_uid" empty="No delegation rules" />
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
+
+
+
