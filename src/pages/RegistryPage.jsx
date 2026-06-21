@@ -154,6 +154,57 @@ const initialStatus = {
   reason_txt: "",
 };
 
+const initialProfileCorrection = {
+  registration_dt: "",
+  birth_dt: "",
+  incorporation_dt: "",
+  tax_residency_cd: "",
+  confidential_profile_bool: false,
+  reason_txt: "",
+};
+
+const initialChildCorrection = {
+  section: "names",
+  child_uid: "",
+  effective_to_dt: "",
+  reason_txt: "",
+};
+
+const initialBankMandate = {
+  financial_institution_cd: "",
+  account_name_txt: "",
+  account_no_masked_txt: "",
+  verification_state_cd: "UNVERIFIED",
+  effective_from_dt: "",
+  effective_to_dt: "",
+  refund_allowed_bool: true,
+  direct_debit_allowed_bool: false,
+  reason_txt: "",
+};
+
+const initialSegment = {
+  segment_type_cd: "SERVICE",
+  segment_value_cd: "",
+  effective_from_dt: "",
+  effective_to_dt: "",
+  reason_txt: "",
+};
+
+const initialRestriction = {
+  restriction_type_cd: "CONFIDENTIAL",
+  restriction_reason_txt: "",
+  effective_from_dt: "",
+  effective_to_dt: "",
+  reason_txt: "",
+};
+
+const initialDuplicateResolution = {
+  duplicate_subject_uid: "",
+  resolution_cd: "REVIEWED_NOT_DUPLICATE",
+  resolution_notes_txt: "",
+  reason_txt: "",
+};
+
 function stripEmpty(record) {
   return Object.fromEntries(
     Object.entries(record).filter(([, value]) => value !== "" && value !== undefined && value !== null)
@@ -315,6 +366,12 @@ export default function RegistryPage() {
   const [activityForm, setActivityForm] = useState(initialActivity);
   const [relationshipForm, setRelationshipForm] = useState(initialRelationship);
   const [statusForm, setStatusForm] = useState(initialStatus);
+  const [profileCorrectionForm, setProfileCorrectionForm] = useState(initialProfileCorrection);
+  const [childCorrectionForm, setChildCorrectionForm] = useState(initialChildCorrection);
+  const [bankMandateForm, setBankMandateForm] = useState(initialBankMandate);
+  const [segmentForm, setSegmentForm] = useState(initialSegment);
+  const [restrictionForm, setRestrictionForm] = useState(initialRestriction);
+  const [duplicateResolutionForm, setDuplicateResolutionForm] = useState(initialDuplicateResolution);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -357,6 +414,56 @@ export default function RegistryPage() {
     () => subjects.filter((subject) => subject.subject_uid !== selectedProfile?.subject_uid),
     [selectedProfile?.subject_uid, subjects]
   );
+
+  const correctionRecordOptions = useMemo(() => {
+    if (!selected) return [];
+    const labels = {
+      names: "Name",
+      identifiers: "Identifier",
+      contacts: "Contact",
+      addresses: "Address",
+      activities: "Activity",
+      relationships: "Relationship",
+    };
+    const idFields = {
+      names: "subject_name_uid",
+      identifiers: "subject_identifier_uid",
+      contacts: "subject_contact_uid",
+      addresses: "subject_address_uid",
+      activities: "subject_activity_uid",
+      relationships: "relationship_uid",
+    };
+    return (selected[childCorrectionForm.section] || []).map((row) => ({
+      id: row[idFields[childCorrectionForm.section]],
+      label: `${labels[childCorrectionForm.section]} - ${
+        row.legal_name_txt ||
+        row.identifier_value_txt ||
+        row.contact_value_txt ||
+        row.line1_txt ||
+        row.activity_code ||
+        row.related_display_name_txt ||
+        row.relationship_type_cd ||
+        "record"
+      }`,
+    }));
+  }, [childCorrectionForm.section, selected]);
+
+  useEffect(() => {
+    if (!selectedProfile) return;
+    setProfileCorrectionForm({
+      registration_dt: selectedProfile.registration_dt || "",
+      birth_dt: selectedProfile.birth_dt || "",
+      incorporation_dt: selectedProfile.incorporation_dt || "",
+      tax_residency_cd: selectedProfile.tax_residency_cd || "",
+      confidential_profile_bool: Boolean(selectedProfile.confidential_profile_bool),
+      reason_txt: "",
+    });
+    setChildCorrectionForm(initialChildCorrection);
+    setBankMandateForm(initialBankMandate);
+    setSegmentForm(initialSegment);
+    setRestrictionForm(initialRestriction);
+    setDuplicateResolutionForm(initialDuplicateResolution);
+  }, [selectedProfile?.subject_uid]);
 
   async function loadSubjects(nextSearch = searchForm) {
     const query = buildQuery({ ...nextSearch, pageSize: 75 });
@@ -495,6 +602,69 @@ export default function RegistryPage() {
     }
   }
 
+  async function registryMutation(endpoint, method, body, message, reset) {
+    if (!selectedProfile?.subject_uid) return;
+    setError("");
+    setSuccess("");
+    setSaving(true);
+    try {
+      await apiRequest(`/api/registry/subjects/${selectedProfile.subject_uid}${endpoint}`, {
+        method,
+        body: stripEmpty(body),
+      });
+      if (reset) reset();
+      await Promise.all([loadProfile(selectedProfile.subject_uid), loadSummary(), loadSubjects(searchForm)]);
+      setSuccess(message);
+    } catch (submitError) {
+      setError(submitError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function correctProfile(event) {
+    event.preventDefault();
+    await registryMutation("/profile", "PATCH", profileCorrectionForm, "Taxpayer profile corrected with audit history.");
+  }
+
+  async function supersedeChildRecord(event) {
+    event.preventDefault();
+    if (!childCorrectionForm.child_uid) {
+      setError("Select a registry record before superseding it.");
+      return;
+    }
+    await registryMutation(
+      `/corrections/${childCorrectionForm.section}/${childCorrectionForm.child_uid}/supersede`,
+      "PATCH",
+      {
+        effective_to_dt: childCorrectionForm.effective_to_dt,
+        reason_txt: childCorrectionForm.reason_txt,
+      },
+      "Registry child record superseded.",
+      () => setChildCorrectionForm(initialChildCorrection)
+    );
+  }
+
+  async function createBankMandate(event) {
+    event.preventDefault();
+    await registryMutation("/bank-mandates", "POST", bankMandateForm, "Bank mandate recorded.", () => setBankMandateForm(initialBankMandate));
+  }
+
+  async function createSegment(event) {
+    event.preventDefault();
+    await registryMutation("/segments", "POST", segmentForm, "Taxpayer segment assigned.", () => setSegmentForm(initialSegment));
+  }
+
+  async function createRestriction(event) {
+    event.preventDefault();
+    await registryMutation("/restrictions", "POST", restrictionForm, "Profile restriction recorded.", () => setRestrictionForm(initialRestriction));
+  }
+
+  async function recordDuplicateResolution(event) {
+    event.preventDefault();
+    await registryMutation("/duplicate-resolutions", "POST", duplicateResolutionForm, "Duplicate resolution recorded.", () => setDuplicateResolutionForm(initialDuplicateResolution));
+  }
+
   const subjectColumns = [
     { key: "subject_no", label: "Taxpayer no." },
     { key: "display_name_txt", label: "Name" },
@@ -580,6 +750,37 @@ export default function RegistryPage() {
       render: (row) => compactCode(row.relationship_direction_cd),
     },
     { key: "ownership_percent", label: "Ownership", render: (row) => (row.ownership_percent ? `${Number(row.ownership_percent)}%` : "-") },
+  ];
+
+  const bankMandateColumns = [
+    { key: "financial_institution_cd", label: "Institution", render: (row) => compactCode(row.financial_institution_cd) },
+    { key: "account_name_txt", label: "Account name" },
+    { key: "account_no_masked_txt", label: "Masked account" },
+    { key: "currency_cd", label: "Currency", render: (row) => row.currency_cd || "-" },
+    { key: "verification_state_cd", label: "Verification", render: (row) => <StatusPill tone={row.verification_state_cd === "VERIFIED" ? "success" : "warning"}>{compactCode(row.verification_state_cd)}</StatusPill> },
+  ];
+
+  const segmentColumns = [
+    { key: "segment_type_cd", label: "Type", render: (row) => compactCode(row.segment_type_cd) },
+    { key: "segment_value_cd", label: "Segment", render: (row) => compactCode(row.segment_value_cd) },
+    { key: "revenue_kind_name", label: "Revenue", render: (row) => row.revenue_kind_name || "All revenue" },
+    { key: "effective_from_dt", label: "From", render: (row) => formatDate(row.effective_from_dt) },
+    { key: "effective_to_dt", label: "To", render: (row) => formatDate(row.effective_to_dt) },
+  ];
+
+  const restrictionColumns = [
+    { key: "restriction_type_cd", label: "Restriction", render: (row) => compactCode(row.restriction_type_cd) },
+    { key: "restriction_reason_txt", label: "Reason", render: (row) => row.restriction_reason_txt || "-" },
+    { key: "approved_by_name_txt", label: "Approved by", render: (row) => row.approved_by_name_txt || "-" },
+    { key: "effective_from_dt", label: "From", render: (row) => formatDate(row.effective_from_dt) },
+    { key: "effective_to_dt", label: "To", render: (row) => formatDate(row.effective_to_dt) },
+  ];
+
+  const duplicateResolutionColumns = [
+    { key: "recorded_ts", label: "Recorded", render: (row) => formatDateTime(row.recorded_ts) },
+    { key: "resolution_cd", label: "Resolution", render: (row) => compactCode(row.resolution_cd) },
+    { key: "duplicate_subject_uid", label: "Matched subject", render: (row) => row.duplicate_subject_uid || "-" },
+    { key: "reason_txt", label: "Reason", render: (row) => row.reason_txt || "-" },
   ];
 
   const lifecycleColumns = [
@@ -1519,6 +1720,145 @@ export default function RegistryPage() {
             )}
           </section>
 
+          <section className="content-band registry-profile-grid__corrections">
+            <div className="section-heading">
+              <div>
+                <span>Registry corrections</span>
+                <h2>Safe Profile Maintenance</h2>
+              </div>
+              <ShieldCheck size={22} />
+            </div>
+            {selectedProfile ? (
+              <div className="registry-correction-stack">
+                <form className="stacked-form" onSubmit={correctProfile}>
+                  <div className="form-grid form-grid--two">
+                    <Field label="Registration date">
+                      <input type="date" value={profileCorrectionForm.registration_dt} onChange={(event) => setProfileCorrectionForm((current) => ({ ...current, registration_dt: event.target.value }))} />
+                    </Field>
+                    <Field label="Birth date">
+                      <input type="date" value={profileCorrectionForm.birth_dt || ""} onChange={(event) => setProfileCorrectionForm((current) => ({ ...current, birth_dt: event.target.value }))} />
+                    </Field>
+                    <Field label="Incorporation date">
+                      <input type="date" value={profileCorrectionForm.incorporation_dt || ""} onChange={(event) => setProfileCorrectionForm((current) => ({ ...current, incorporation_dt: event.target.value }))} />
+                    </Field>
+                    <Field label="Tax residency">
+                      <input value={profileCorrectionForm.tax_residency_cd || ""} onChange={(event) => setProfileCorrectionForm((current) => ({ ...current, tax_residency_cd: event.target.value.toUpperCase() }))} />
+                    </Field>
+                  </div>
+                  <label className="check-control">
+                    <input type="checkbox" checked={profileCorrectionForm.confidential_profile_bool} onChange={(event) => setProfileCorrectionForm((current) => ({ ...current, confidential_profile_bool: event.target.checked }))} />
+                    <span>Confidential taxpayer profile</span>
+                  </label>
+                  <Field label="Reason for correction">
+                    <textarea required value={profileCorrectionForm.reason_txt} onChange={(event) => setProfileCorrectionForm((current) => ({ ...current, reason_txt: event.target.value }))} />
+                  </Field>
+                  <button className="primary-button" type="submit" disabled={saving}>Save profile correction</button>
+                </form>
+
+                <form className="stacked-form" onSubmit={supersedeChildRecord}>
+                  <div className="form-grid form-grid--two">
+                    <SelectField label="Record type" value={childCorrectionForm.section} onChange={(value) => setChildCorrectionForm((current) => ({ ...current, section: value, child_uid: "" }))}>
+                      <option value="names">Names</option>
+                      <option value="identifiers">Identifiers</option>
+                      <option value="contacts">Contacts</option>
+                      <option value="addresses">Addresses</option>
+                      <option value="activities">Activities</option>
+                      <option value="relationships">Relationships</option>
+                    </SelectField>
+                    <SelectField label="Record" value={childCorrectionForm.child_uid} onChange={(value) => setChildCorrectionForm((current) => ({ ...current, child_uid: value }))}>
+                      <option value="">Select record</option>
+                      {correctionRecordOptions.map((option) => (
+                        <option key={option.id} value={option.id}>{option.label}</option>
+                      ))}
+                    </SelectField>
+                    <Field label="End date">
+                      <input type="date" value={childCorrectionForm.effective_to_dt} onChange={(event) => setChildCorrectionForm((current) => ({ ...current, effective_to_dt: event.target.value }))} />
+                    </Field>
+                  </div>
+                  <Field label="Supersede reason">
+                    <textarea required value={childCorrectionForm.reason_txt} onChange={(event) => setChildCorrectionForm((current) => ({ ...current, reason_txt: event.target.value }))} />
+                  </Field>
+                  <button className="secondary-button" type="submit" disabled={saving}>Supersede selected child record</button>
+                </form>
+
+                <form className="compact-form" onSubmit={createBankMandate}>
+                  <Field label="Institution code">
+                    <input value={bankMandateForm.financial_institution_cd} onChange={(event) => setBankMandateForm((current) => ({ ...current, financial_institution_cd: event.target.value.toUpperCase() }))} />
+                  </Field>
+                  <Field label="Account name">
+                    <input required value={bankMandateForm.account_name_txt} onChange={(event) => setBankMandateForm((current) => ({ ...current, account_name_txt: event.target.value }))} />
+                  </Field>
+                  <Field label="Masked account">
+                    <input required value={bankMandateForm.account_no_masked_txt} onChange={(event) => setBankMandateForm((current) => ({ ...current, account_no_masked_txt: event.target.value }))} />
+                  </Field>
+                  <SelectField label="Verification" value={bankMandateForm.verification_state_cd} onChange={(value) => setBankMandateForm((current) => ({ ...current, verification_state_cd: value }))}>
+                    <option value="UNVERIFIED">Unverified</option>
+                    <option value="VERIFIED">Verified</option>
+                    <option value="REJECTED">Rejected</option>
+                  </SelectField>
+                  <Field label="Reason">
+                    <textarea required value={bankMandateForm.reason_txt} onChange={(event) => setBankMandateForm((current) => ({ ...current, reason_txt: event.target.value }))} />
+                  </Field>
+                  <button className="primary-button full-span" type="submit" disabled={saving}>Add bank mandate</button>
+                </form>
+
+                <form className="compact-form" onSubmit={createSegment}>
+                  <Field label="Segment type">
+                    <input required value={segmentForm.segment_type_cd} onChange={(event) => setSegmentForm((current) => ({ ...current, segment_type_cd: event.target.value.toUpperCase() }))} />
+                  </Field>
+                  <Field label="Segment value">
+                    <input required value={segmentForm.segment_value_cd} onChange={(event) => setSegmentForm((current) => ({ ...current, segment_value_cd: event.target.value.toUpperCase() }))} />
+                  </Field>
+                  <Field label="Reason">
+                    <textarea required value={segmentForm.reason_txt} onChange={(event) => setSegmentForm((current) => ({ ...current, reason_txt: event.target.value }))} />
+                  </Field>
+                  <button className="primary-button full-span" type="submit" disabled={saving}>Assign segment</button>
+                </form>
+
+                <form className="compact-form" onSubmit={createRestriction}>
+                  <Field label="Restriction type">
+                    <input required value={restrictionForm.restriction_type_cd} onChange={(event) => setRestrictionForm((current) => ({ ...current, restriction_type_cd: event.target.value.toUpperCase() }))} />
+                  </Field>
+                  <Field label="Restriction reason">
+                    <textarea value={restrictionForm.restriction_reason_txt} onChange={(event) => setRestrictionForm((current) => ({ ...current, restriction_reason_txt: event.target.value }))} />
+                  </Field>
+                  <Field label="Audit reason">
+                    <textarea required value={restrictionForm.reason_txt} onChange={(event) => setRestrictionForm((current) => ({ ...current, reason_txt: event.target.value }))} />
+                  </Field>
+                  <button className="primary-button full-span" type="submit" disabled={saving}>Record restriction</button>
+                </form>
+
+                <form className="stacked-form" onSubmit={recordDuplicateResolution}>
+                  <SelectField label="Candidate" value={duplicateResolutionForm.duplicate_subject_uid} onChange={(value) => setDuplicateResolutionForm((current) => ({ ...current, duplicate_subject_uid: value }))}>
+                    <option value="">No candidate selected</option>
+                    {selected.duplicate_candidates?.map((candidate) => (
+                      <option key={candidate.subject_uid} value={candidate.subject_uid}>{candidate.display_name_txt} - {candidate.subject_no}</option>
+                    ))}
+                  </SelectField>
+                  <SelectField label="Resolution" value={duplicateResolutionForm.resolution_cd} onChange={(value) => setDuplicateResolutionForm((current) => ({ ...current, resolution_cd: value }))}>
+                    <option value="REVIEWED_NOT_DUPLICATE">Reviewed, not duplicate</option>
+                    <option value="REFERRED_FOR_REVIEW">Referred for review</option>
+                    <option value="DUPLICATE_OF">Duplicate of selected</option>
+                    <option value="LINKED">Linked profile</option>
+                    <option value="MERGED">Merged</option>
+                  </SelectField>
+                  <Field label="Reason">
+                    <textarea required value={duplicateResolutionForm.reason_txt} onChange={(event) => setDuplicateResolutionForm((current) => ({ ...current, reason_txt: event.target.value }))} />
+                  </Field>
+                  <button className="primary-button" type="submit" disabled={saving}>Record duplicate outcome</button>
+                </form>
+
+                <div className="registry-record-panel">
+                  <DataTable columns={bankMandateColumns} rows={selected.bank_mandates || []} keyField="bank_mandate_uid" empty="No bank mandates recorded" />
+                  <DataTable columns={segmentColumns} rows={selected.subject_segments || []} keyField="subject_segment_uid" empty="No taxpayer segments recorded" />
+                  <DataTable columns={restrictionColumns} rows={selected.profile_restrictions || []} keyField="profile_restriction_uid" empty="No profile restrictions recorded" />
+                  <DataTable columns={duplicateResolutionColumns} rows={selected.duplicate_resolutions || []} keyField="recorded_ts" empty="No duplicate resolutions recorded" />
+                </div>
+              </div>
+            ) : (
+              <EmptyRegistryState title="Correction tools locked" text="Open a taxpayer profile before making controlled corrections." />
+            )}
+          </section>
           <section className="content-band registry-profile-grid__records">
             {selectedProfile ? (
               <div className="registry-record-stack">

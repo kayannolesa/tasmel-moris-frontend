@@ -2222,6 +2222,60 @@ a {
   display: none;
 }
 
+
+.form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.form-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.reference-registry-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.registry-profile-grid__corrections {
+  grid-area: corrections;
+}
+
+.registry-correction-stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.registry-correction-stack > .stacked-form,
+.registry-correction-stack > .compact-form,
+.registry-correction-stack > .registry-record-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.registry-correction-stack > .registry-record-panel {
+  grid-column: 1 / -1;
+}
+
+.registry-profile-grid {
+  grid-template-areas:
+    "summary status"
+    "corrections corrections"
+    "records records";
+}
 @media (max-width: 1060px) {
   .metric-grid,
   .module-grid {
@@ -2315,6 +2369,7 @@ a {
     grid-template-areas:
       "summary"
       "status"
+      "corrections"
       "records";
   }
 
@@ -2444,7 +2499,10 @@ a {
     grid-template-columns: 1fr;
   }
 }
-
+  .form-grid--two,
+  .registry-correction-stack {
+    grid-template-columns: 1fr;
+  }
 @media (max-width: 620px) {
   .login-page {
     padding: 12px;
