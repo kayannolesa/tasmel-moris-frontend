@@ -28,6 +28,7 @@ import {
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDateTime, formatNumber } from "../utils/format.js";
+import { isRestrictedSourceText, sanitizeUiText } from "../utils/provenanceText.js";
 
 const tabs = [
   { id: "activation", label: "Staff Activation" },
@@ -178,16 +179,22 @@ function getRiskTone(flag) {
   return "neutral";
 }
 
+function visibleRiskFlags(flags = []) {
+  return flags.filter((flag) => !isRestrictedSourceText(`${flag.code || ""} ${flag.label || ""}`));
+}
+
 function RoleRiskFlags({ flags = [] }) {
-  if (!flags.length) {
+  const visibleFlags = visibleRiskFlags(flags);
+
+  if (!visibleFlags.length) {
     return <StatusPill tone="success">Balanced</StatusPill>;
   }
 
   return (
     <div className="chip-list">
-      {flags.map((flag) => (
+      {visibleFlags.map((flag) => (
         <StatusPill tone={getRiskTone(flag)} key={flag.code}>
-          {flag.label}
+          {sanitizeUiText(flag.label)}
         </StatusPill>
       ))}
     </div>
@@ -276,7 +283,7 @@ export default function AdminPage() {
     const term = roleSearch.trim().toLowerCase();
     if (!term) return rolePermissions;
     return rolePermissions.filter((role) =>
-      [role.role_name, role.role_code, role.role_type_cd, role.source_channel_cd].some((value) =>
+      [role.role_name, role.role_code, role.role_type_cd].some((value) =>
         String(value || "").toLowerCase().includes(term)
       )
     );
@@ -320,7 +327,7 @@ export default function AdminPage() {
       role_code: selectedRole.role_code || "",
       role_name: selectedRole.role_name || "",
       role_type_cd: selectedRole.role_type_cd || "BUSINESS",
-      description_txt: selectedRole.description_txt || "",
+      description_txt: sanitizeUiText(selectedRole.description_txt),
       reason_txt: "",
     });
     setGrantForm((current) => ({ ...current, resource_cd: "", reason_txt: "" }));
@@ -1170,7 +1177,7 @@ export default function AdminPage() {
               <ShieldAlert size={22} />
             </div>
             <Field label="Filter roles">
-              <input value={roleSearch} onChange={(event) => setRoleSearch(event.target.value)} placeholder="Role, source, type" />
+              <input value={roleSearch} onChange={(event) => setRoleSearch(event.target.value)} placeholder="Role or type" />
             </Field>
             <div className="role-review-list">
               {filteredRolePermissions.map((role) => (

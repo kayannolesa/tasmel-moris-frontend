@@ -2,6 +2,7 @@ import { Archive, RefreshCw, RotateCcw, Save, Search, ShieldCheck, Unlink } from
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../../services/api.js";
 import { formatDateTime } from "../../utils/format.js";
+import { sanitizeUiText } from "../../utils/provenanceText.js";
 import { DataTable, Field, GovernanceShell, ReasonField, SelectField, StatePill, compactCode, formatDate, formatMoney, safeJson, stripEmpty } from "./GovernanceShared.jsx";
 
 const stateOptions = {
@@ -132,9 +133,10 @@ function asField(name) {
 
 function normaliseValue(value, type) {
   if (type === "boolean") return Boolean(value);
-  if (type === "json") return value ? JSON.stringify(value, null, 2) : "";
+  if (type === "json") return value ? sanitizeUiText(JSON.stringify(value, null, 2)) : "";
   if (value === null || value === undefined) return "";
   if (type === "datetime-local") return String(value).slice(0, 16);
+  if (typeof value === "string") return sanitizeUiText(value);
   return value;
 }
 
@@ -147,7 +149,7 @@ function buildInitialForm(resource, row = {}) {
 function displayValue(row, names = []) {
   for (const name of names) {
     const value = row?.[name];
-    if (value !== null && value !== undefined && String(value).trim()) return value;
+    if (value !== null && value !== undefined && String(value).trim()) return sanitizeUiText(value);
   }
   return row ? "Selected record" : "No record selected";
 }
@@ -159,8 +161,8 @@ function renderFieldValue(row, item) {
   if (item.type === "date") return formatDate(value);
   if (item.type === "datetime-local") return formatDateTime(value);
   if (item.name.endsWith("_amt")) return formatMoney(value);
-  if (typeof value === "object") return JSON.stringify(value);
-  return value;
+  if (typeof value === "object") return sanitizeUiText(JSON.stringify(value));
+  return sanitizeUiText(value);
 }
 
 function buildPayload(resource, form) {

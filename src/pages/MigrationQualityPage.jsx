@@ -13,6 +13,7 @@ import AdvancedLifecycleGovernancePanel from "../components/governance/AdvancedL
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
+import { sanitizeUiText } from "../utils/provenanceText.js";
 
 const tabs = [
   { id: "sources", label: "Sources" },
@@ -31,6 +32,10 @@ function statusTone(value) {
   if (["UNMAPPED", "OPEN", "MEDIUM", "DRAFT"].includes(status)) return "warning";
   if (["CRITICAL", "FAILED", "BLOCKED"].includes(status)) return "danger";
   return "neutral";
+}
+
+function sourceLabel(source) {
+  return sanitizeUiText(source?.source_name) || "Source";
 }
 
 const initialSource = { source_name: "", source_type_cd: "LEGACY_SYSTEM", owner_txt: "", extraction_dt: today(), source_state_cd: "REGISTERED" };
@@ -98,36 +103,36 @@ export default function MigrationQualityPage() {
   }
 
   const sourceColumns = [
-    { key: "source_code", label: "Source" },
-    { key: "source_name", label: "Name" },
+    { key: "source_code", label: "Source", render: (row) => sanitizeUiText(row.source_code) || "-" },
+    { key: "source_name", label: "Name", render: (row) => sanitizeUiText(row.source_name) || "-" },
     { key: "source_type_cd", label: "Type", render: (row) => compactCode(row.source_type_cd) },
     { key: "entity_profile_count", label: "Entities", render: (row) => formatNumber(row.entity_profile_count) },
     { key: "source_state_cd", label: "State", render: (row) => <StatusPill tone={statusTone(row.source_state_cd)}>{compactCode(row.source_state_cd)}</StatusPill> },
   ];
   const profileColumns = [
-    { key: "source_name", label: "Source" },
-    { key: "entity_name_txt", label: "Entity" },
+    { key: "source_name", label: "Source", render: (row) => sanitizeUiText(row.source_name) || "-" },
+    { key: "entity_name_txt", label: "Entity", render: (row) => sanitizeUiText(row.entity_name_txt) || "-" },
     { key: "row_count_no", label: "Rows", render: (row) => formatNumber(row.row_count_no) },
     { key: "field_count_no", label: "Fields", render: (row) => formatNumber(row.field_count_no) },
     { key: "mapping_state_cd", label: "Mapping", render: (row) => <StatusPill tone={statusTone(row.mapping_state_cd)}>{compactCode(row.mapping_state_cd)}</StatusPill> },
   ];
   const crosswalkColumns = [
-    { key: "source_name", label: "Source" },
-    { key: "source_entity_name_txt", label: "Entity" },
-    { key: "source_record_key_txt", label: "Source key" },
+    { key: "source_name", label: "Source", render: (row) => sanitizeUiText(row.source_name) || "-" },
+    { key: "source_entity_name_txt", label: "Entity", render: (row) => sanitizeUiText(row.source_entity_name_txt) || "-" },
+    { key: "source_record_key_txt", label: "Source key", render: (row) => sanitizeUiText(row.source_record_key_txt) || "-" },
     { key: "target_table_cd", label: "Target table" },
     { key: "confidence_cd", label: "Confidence", render: (row) => <StatusPill tone={statusTone(row.confidence_cd)}>{compactCode(row.confidence_cd)}</StatusPill> },
   ];
   const issueColumns = [
-    { key: "source_name", label: "Source", render: (row) => row.source_name || "-" },
-    { key: "entity_name_txt", label: "Entity", render: (row) => row.entity_name_txt || "-" },
-    { key: "issue_code", label: "Issue" },
+    { key: "source_name", label: "Source", render: (row) => sanitizeUiText(row.source_name) || "-" },
+    { key: "entity_name_txt", label: "Entity", render: (row) => sanitizeUiText(row.entity_name_txt) || "-" },
+    { key: "issue_code", label: "Issue", render: (row) => sanitizeUiText(row.issue_code) || "-" },
     { key: "detected_ts", label: "Detected", render: (row) => formatDateTime(row.detected_ts) },
     { key: "issue_severity_cd", label: "Severity", render: (row) => <StatusPill tone={statusTone(row.issue_severity_cd)}>{compactCode(row.issue_severity_cd)}</StatusPill> },
   ];
   const reconciliationColumns = [
-    { key: "reconciliation_code", label: "Run" },
-    { key: "source_name", label: "Source" },
+    { key: "reconciliation_code", label: "Run", render: (row) => sanitizeUiText(row.reconciliation_code) || "-" },
+    { key: "source_name", label: "Source", render: (row) => sanitizeUiText(row.source_name) || "-" },
     { key: "target_table_cd", label: "Target" },
     { key: "source_count_no", label: "Source rows", render: (row) => formatNumber(row.source_count_no) },
     { key: "target_count_no", label: "Target rows", render: (row) => formatNumber(row.target_count_no) },
@@ -183,7 +188,7 @@ export default function MigrationQualityPage() {
               );
             }}>
               <SelectField label="Source" value={profileForm.source_register_uid} onChange={(value) => setProfileForm({ ...profileForm, source_register_uid: value })} required>
-                <option value="">Select source</option>{sources.map((source) => <option key={source.source_register_uid} value={source.source_register_uid}>{source.source_name}</option>)}
+                <option value="">Select source</option>{sources.map((source) => <option key={source.source_register_uid} value={source.source_register_uid}>{sourceLabel(source)}</option>)}
               </SelectField>
               <Field label="Entity name"><input required value={profileForm.entity_name_txt} onChange={(event) => setProfileForm({ ...profileForm, entity_name_txt: event.target.value })} /></Field>
               <div className="compact-form">
@@ -209,7 +214,7 @@ export default function MigrationQualityPage() {
               void submit("/api/migration/crosswalks", crosswalkForm, () => setCrosswalkForm(initialCrosswalk), "Crosswalk created");
             }}>
               <SelectField label="Source" value={crosswalkForm.source_register_uid} onChange={(value) => setCrosswalkForm({ ...crosswalkForm, source_register_uid: value })} required>
-                <option value="">Select source</option>{sources.map((source) => <option key={source.source_register_uid} value={source.source_register_uid}>{source.source_name}</option>)}
+                <option value="">Select source</option>{sources.map((source) => <option key={source.source_register_uid} value={source.source_register_uid}>{sourceLabel(source)}</option>)}
               </SelectField>
               <Field label="Source entity"><input required value={crosswalkForm.source_entity_name_txt} onChange={(event) => setCrosswalkForm({ ...crosswalkForm, source_entity_name_txt: event.target.value })} /></Field>
               <Field label="Source record key"><input required value={crosswalkForm.source_record_key_txt} onChange={(event) => setCrosswalkForm({ ...crosswalkForm, source_record_key_txt: event.target.value })} /></Field>
@@ -246,10 +251,10 @@ export default function MigrationQualityPage() {
               );
             }}>
               <SelectField label="Source" value={issueForm.source_register_uid} onChange={syncProfileSource}>
-                <option value="">No source selected</option>{sources.map((source) => <option key={source.source_register_uid} value={source.source_register_uid}>{source.source_name}</option>)}
+                <option value="">No source selected</option>{sources.map((source) => <option key={source.source_register_uid} value={source.source_register_uid}>{sourceLabel(source)}</option>)}
               </SelectField>
               <SelectField label="Entity" value={issueForm.source_entity_profile_uid} onChange={(value) => setIssueForm({ ...issueForm, source_entity_profile_uid: value })}>
-                <option value="">No entity selected</option>{profiles.filter((profile) => !issueForm.source_register_uid || profile.source_register_uid === issueForm.source_register_uid).map((profile) => <option key={profile.source_entity_profile_uid} value={profile.source_entity_profile_uid}>{profile.entity_name_txt}</option>)}
+                <option value="">No entity selected</option>{profiles.filter((profile) => !issueForm.source_register_uid || profile.source_register_uid === issueForm.source_register_uid).map((profile) => <option key={profile.source_entity_profile_uid} value={profile.source_entity_profile_uid}>{sanitizeUiText(profile.entity_name_txt) || "Entity"}</option>)}
               </SelectField>
               <SelectField label="Severity" value={issueForm.issue_severity_cd} onChange={(value) => setIssueForm({ ...issueForm, issue_severity_cd: value })}>
                 <option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option>
@@ -274,7 +279,7 @@ export default function MigrationQualityPage() {
               );
             }}>
               <SelectField label="Source" value={reconciliationForm.source_register_uid} onChange={(value) => setReconciliationForm({ ...reconciliationForm, source_register_uid: value })} required>
-                <option value="">Select source</option>{sources.map((source) => <option key={source.source_register_uid} value={source.source_register_uid}>{source.source_name}</option>)}
+                <option value="">Select source</option>{sources.map((source) => <option key={source.source_register_uid} value={source.source_register_uid}>{sourceLabel(source)}</option>)}
               </SelectField>
               <Field label="Target table"><input required value={reconciliationForm.target_table_cd} onChange={(event) => setReconciliationForm({ ...reconciliationForm, target_table_cd: event.target.value })} /></Field>
               <div className="compact-form">
