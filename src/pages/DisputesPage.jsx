@@ -21,6 +21,7 @@ import {
   PageHeader,
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
+import AdvancedLifecycleGovernancePanel from "../components/governance/AdvancedLifecycleGovernancePanel.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
@@ -31,6 +32,7 @@ const tabs = [
   { id: "issues", label: "Issues" },
   { id: "decisions", label: "Decisions" },
   { id: "appeals", label: "External Appeals" },
+  { id: "governance", label: "Lifecycle Governance" },
   { id: "links", label: "Evidence And Audit" },
 ];
 
@@ -428,6 +430,8 @@ export default function DisputesPage() {
       </div>
 
       <ModuleTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "governance" ? <AdvancedLifecycleGovernancePanel moduleKey="disputes" /> : null}
+
       <FormAlert error={error} success={success} />
 
       {activeTab === "workbench" ? (

@@ -9,6 +9,7 @@ import {
   PageHeader,
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
+import AdvancedLifecycleGovernancePanel from "../components/governance/AdvancedLifecycleGovernancePanel.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
@@ -16,6 +17,7 @@ import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } fr
 const tabs = [
   { id: "sources", label: "Sources" },
   { id: "mapping", label: "Crosswalks" },
+  { id: "governance", label: "Lifecycle Governance" },
   { id: "quality", label: "Quality" },
 ];
 
@@ -144,6 +146,8 @@ export default function MigrationQualityPage() {
       </div>
 
       <ModuleTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "governance" ? <AdvancedLifecycleGovernancePanel moduleKey="migration" /> : null}
+
       <FormAlert error={error} success={success} />
 
       {activeTab === "sources" ? (

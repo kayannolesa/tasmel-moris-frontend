@@ -9,6 +9,7 @@ import {
   PageHeader,
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
+import AdvancedLifecycleGovernancePanel from "../components/governance/AdvancedLifecycleGovernancePanel.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatNumber } from "../utils/format.js";
@@ -16,6 +17,7 @@ import { compactCode, formatDate, formatDateTime, formatNumber } from "../utils/
 const tabs = [
   { id: "partners", label: "Partners" },
   { id: "messages", label: "Messages" },
+    { id: "governance", label: "Lifecycle Governance" },
   { id: "exceptions", label: "Exceptions" },
 ];
 
@@ -146,6 +148,8 @@ export default function IntegrationsPage() {
       </div>
 
       <ModuleTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "governance" ? <AdvancedLifecycleGovernancePanel moduleKey="integrations" /> : null}
+
       <FormAlert error={error} success={success} />
 
       {activeTab === "partners" ? (

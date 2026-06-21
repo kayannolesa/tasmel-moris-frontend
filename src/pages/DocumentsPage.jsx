@@ -19,6 +19,7 @@ import {
   PageHeader,
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
+import AdvancedLifecycleGovernancePanel from "../components/governance/AdvancedLifecycleGovernancePanel.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest, downloadBlob } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatNumber } from "../utils/format.js";
@@ -28,6 +29,7 @@ const tabs = [
   { id: "generation", label: "Official Generation" },
   { id: "messages", label: "Messaging" },
   { id: "templates", label: "Templates" },
+    { id: "governance", label: "Lifecycle Governance" },
   { id: "audit", label: "Audit Trail" },
 ];
 
@@ -376,6 +378,8 @@ export default function DocumentsPage() {
       </div>
 
       <ModuleTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "governance" ? <AdvancedLifecycleGovernancePanel moduleKey="documents" /> : null}
+
       <FormAlert error={error} success={success} />
 
       {activeTab === "repository" ? (

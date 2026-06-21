@@ -22,6 +22,7 @@ import {
   PageHeader,
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
+import AdvancedLifecycleGovernancePanel from "../components/governance/AdvancedLifecycleGovernancePanel.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
@@ -32,6 +33,7 @@ const tabs = [
   { id: "plans", label: "Plans" },
   { id: "audits", label: "Audits" },
   { id: "investigations", label: "Investigations" },
+    { id: "governance", label: "Lifecycle Governance" },
   { id: "disclosures", label: "Disclosures" },
 ];
 
@@ -531,6 +533,8 @@ export default function CompliancePage() {
       </div>
 
       <ModuleTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "governance" ? <AdvancedLifecycleGovernancePanel moduleKey="compliance" /> : null}
+
       <FormAlert error={error} success={success} />
 
       {activeTab === "workbench" ? (

@@ -23,6 +23,7 @@ import {
   PageHeader,
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
+import AdvancedLifecycleGovernancePanel from "../components/governance/AdvancedLifecycleGovernancePanel.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
@@ -35,6 +36,7 @@ const tabs = [
   { id: "conditions", label: "Conditions" },
   { id: "renewals", label: "Renewals" },
   { id: "clearance", label: "Clearance" },
+  { id: "governance", label: "Lifecycle Governance" },
   { id: "history", label: "Lifecycle" },
 ];
 
@@ -438,6 +440,8 @@ export default function LicensingPage() {
       </div>
 
       <ModuleTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "governance" ? <AdvancedLifecycleGovernancePanel moduleKey="licensing" /> : null}
+
       <FormAlert error={error} success={success} />
 
       {activeTab === "workbench" ? (

@@ -9,6 +9,7 @@ import {
   PageHeader,
   SelectField,
 } from "../components/common/WorkspacePrimitives.jsx";
+import AdvancedLifecycleGovernancePanel from "../components/governance/AdvancedLifecycleGovernancePanel.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { apiRequest } from "../services/api.js";
 import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } from "../utils/format.js";
@@ -16,6 +17,7 @@ import { compactCode, formatDate, formatDateTime, formatMoney, formatNumber } fr
 const tabs = [
   { id: "reports", label: "Reports" },
   { id: "metrics", label: "KPIs" },
+    { id: "governance", label: "Lifecycle Governance" },
   { id: "marts", label: "Data Marts" },
 ];
 
@@ -170,6 +172,8 @@ export default function ReportingPage() {
       </section>
 
       <ModuleTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "governance" ? <AdvancedLifecycleGovernancePanel moduleKey="reporting" /> : null}
+
       <FormAlert error={error} success={success} />
 
       {activeTab === "reports" ? (
