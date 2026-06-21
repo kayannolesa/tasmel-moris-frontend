@@ -319,6 +319,9 @@ a {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0 18px;
   border: 0;
   border-radius: 6px;
   background: var(--teal);
@@ -343,6 +346,8 @@ a {
   align-items: center;
   justify-content: center;
   gap: 9px;
+  width: fit-content;
+  max-width: 100%;
   padding: 0 14px;
   border-radius: 6px;
   font-weight: 800;
@@ -2978,6 +2983,31 @@ a {
   width: 100%;
   min-width: 0;
   justify-self: stretch;
+}
+
+.content-band .primary-button,
+.content-band .secondary-button,
+.content-band .ghost-button,
+.stacked-form > .primary-button,
+.stacked-form > .secondary-button,
+.compact-form > .primary-button,
+.compact-form > .secondary-button,
+.action-form > .primary-button,
+.action-form > .secondary-button,
+.form-grid > .primary-button,
+.form-grid > .secondary-button,
+.button-row > .primary-button,
+.button-row > .secondary-button {
+  width: fit-content;
+  justify-self: start;
+  align-self: center;
+}
+
+.login-form > .primary-button,
+.auth-form > .primary-button,
+.activation-form > .primary-button,
+.activation-form > .secondary-button {
+  width: 100%;
 }
 
 .security-grid__directory,
