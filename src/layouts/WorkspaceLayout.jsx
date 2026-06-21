@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import MorisWordmark from "../components/common/MorisWordmark.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const navItems = [
@@ -67,7 +68,7 @@ export default function WorkspaceLayout() {
             <img src="/mor-logo.png" alt="Ministry of Revenue logo" />
           </div>
           <div className="workspace-brand__text">
-            <strong>MORIS</strong>
+            <MorisWordmark className="workspace-brand__wordmark" />
             <span>Ministry of Revenue</span>
           </div>
           <button className="icon-button mobile-only" type="button" onClick={() => setSidebarOpen(false)} aria-label="Close menu">

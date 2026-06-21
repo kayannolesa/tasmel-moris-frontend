@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle2, LockKeyhole, ServerCog, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import MorisWordmark from "../components/common/MorisWordmark.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { apiRequest } from "../services/api.js";
@@ -61,7 +62,7 @@ export default function LoginPage() {
             </div>
             <div>
               <span>Ministry of Revenue</span>
-              <strong>MORIS</strong>
+              <MorisWordmark className="brand-lockup__wordmark" />
             </div>
           </div>
           <div className="login-panel__statement">

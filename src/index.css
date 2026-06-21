@@ -61,17 +61,59 @@ a {
   padding: 24px;
 }
 
-.boot-mark {
-  font-size: 24px;
+.moris-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+}
+
+.boot-brand {
+  width: min(360px, 82vw);
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #d7e5e4;
+  background:
+    linear-gradient(135deg, rgba(16, 35, 49, 0.96), rgba(15, 118, 110, 0.9)),
+    var(--nav);
+  box-shadow: var(--shadow);
+}
+
+.boot-brand__mark {
+  width: min(230px, 62vw);
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.24));
+}
+
+.boot-brand span {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0;
 }
 
 .boot-line {
-  width: 180px;
+  width: min(180px, 58vw);
   height: 3px;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--teal), var(--gold));
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: bootSweep 1.2s ease-in-out infinite;
+}
+
+@keyframes bootSweep {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scaleX(0.7);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 
 .login-page {
@@ -167,9 +209,10 @@ a {
   color: rgba(255, 255, 255, 0.72);
 }
 
-.brand-lockup strong {
-  display: block;
-  font-size: 26px;
+.brand-lockup__wordmark {
+  width: clamp(116px, 12vw, 158px);
+  margin-top: 3px;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.2));
 }
 
 .login-panel__statement h1 {
@@ -533,9 +576,10 @@ a {
   flex: 0 0 56px;
 }
 
-.workspace-brand__text strong {
-  display: block;
-  font-size: 22px;
+.workspace-brand__wordmark {
+  width: 118px;
+  max-width: 100%;
+  filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.28));
 }
 
 .workspace-brand__text span,

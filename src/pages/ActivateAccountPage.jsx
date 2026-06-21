@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle2, KeyRound, LogOut, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import MorisWordmark from "../components/common/MorisWordmark.jsx";
 import StatusPill from "../components/common/StatusPill.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -60,7 +61,7 @@ export default function ActivateAccountPage() {
             </div>
             <div>
               <span>Ministry of Revenue</span>
-              <strong>MORIS</strong>
+              <MorisWordmark className="brand-lockup__wordmark" />
             </div>
           </div>
 

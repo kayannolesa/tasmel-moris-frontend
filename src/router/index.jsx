@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import MorisWordmark from "../components/common/MorisWordmark.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import WorkspaceLayout from "../layouts/WorkspaceLayout.jsx";
 import AccountPage from "../pages/AccountPage.jsx";
@@ -28,8 +29,11 @@ import WorkflowPage from "../pages/WorkflowPage.jsx";
 function LoadingScreen() {
   return (
     <main className="boot-screen">
-      <div className="boot-mark">MORIS</div>
-      <div className="boot-line" />
+      <div className="boot-brand">
+        <MorisWordmark className="boot-brand__mark" />
+        <span>Preparing secure workspace</span>
+        <div className="boot-line" />
+      </div>
     </main>
   );
 }
