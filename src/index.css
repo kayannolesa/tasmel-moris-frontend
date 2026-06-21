@@ -841,8 +841,9 @@ a {
 
 .module-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  overflow-x: auto;
+  overflow-x: visible;
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -851,7 +852,7 @@ a {
 
 .module-tabs button {
   min-height: 40px;
-  flex: 0 0 auto;
+  flex: 1 1 160px;
   border: 0;
   border-radius: 6px;
   padding: 0 14px;
@@ -905,7 +906,7 @@ a {
 
 .table-shell {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: visible;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -934,7 +935,8 @@ a {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 720px;
+  min-width: 0;
+  table-layout: fixed;
 }
 
 .data-table th,
@@ -971,6 +973,191 @@ a {
   color: var(--muted);
   text-align: center;
   font-weight: 800;
+}
+
+.data-card-shell {
+  width: 100%;
+  min-width: 0;
+}
+
+.data-card-list {
+  display: grid;
+  gap: 12px;
+}
+
+.data-card {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 251, 0.94)),
+    var(--panel);
+  box-shadow: 0 10px 22px rgba(15, 35, 49, 0.05);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.data-card:hover,
+.data-card.is-selected {
+  border-color: rgba(15, 118, 110, 0.32);
+  box-shadow: 0 14px 30px rgba(15, 35, 49, 0.08);
+}
+
+.data-card[onclick] {
+  cursor: pointer;
+}
+
+.data-card__header,
+.data-card__actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.data-card__header {
+  justify-content: space-between;
+}
+
+.data-card__identity {
+  min-width: 0;
+}
+
+.data-card__identity span,
+.data-card__grid dt,
+.data-record-modal__header span,
+.data-record-modal__body dt {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.data-card__identity strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.data-card__actions {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.primary-button--compact,
+.secondary-button--compact {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.data-card__grid,
+.data-record-modal__body {
+  display: grid;
+  gap: 10px;
+}
+
+.data-card__grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.data-card__grid div,
+.data-record-modal__body div {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #dce7e8;
+  border-radius: 8px;
+  background: #fbfdfd;
+}
+
+.data-card__grid dd,
+.data-record-modal__body dd {
+  margin: 5px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.data-record-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.data-record-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(10, 24, 34, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.data-record-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(980px, 100%);
+  max-height: min(860px, calc(100dvh - 48px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 30px 80px rgba(10, 24, 34, 0.24);
+}
+
+.data-record-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(15, 35, 49, 0.98), rgba(15, 118, 110, 0.9)),
+    var(--nav);
+}
+
+.data-record-modal__header span {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.data-record-modal__header h3 {
+  margin: 4px 0 0;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.data-record-modal__close {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-weight: 850;
+}
+
+.data-record-modal__body {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 0;
+  margin: 0;
+  padding: 18px;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .record-panel {
@@ -2731,5 +2918,101 @@ a {
 @media (max-width: 840px) {
   .governance-toolbar {
     grid-template-columns: 1fr;
+  }
+}
+
+.module-tabs {
+  scrollbar-width: none;
+}
+
+.module-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.module-workbench,
+.security-grid,
+.role-verification-grid,
+.registry-search-grid,
+.registry-registration-grid,
+.registry-profile-grid,
+.obligation-workbench-grid,
+.filing-workbench-grid,
+.declaration-detail-grid,
+.assessment-workbench-grid,
+.assessment-create-grid,
+.assessment-adjustment-grid,
+.assessment-clearance-grid,
+.finance-receipt-grid,
+.finance-allocation-grid,
+.finance-ledger-grid,
+.finance-refund-grid,
+.finance-control-grid,
+.collections-workbench-grid,
+.collections-matter-grid,
+.collections-ops-grid,
+.collections-enforcement-grid,
+.collections-review-grid,
+.workflow-decision-grid,
+.workflow-task-grid,
+.workflow-engine-grid,
+.workflow-admin-grid,
+.document-repository-grid,
+.document-generation-grid,
+.document-message-grid,
+.document-template-grid,
+.compliance-workbench-grid,
+.registry-correction-stack {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: none;
+}
+
+.content-band,
+.metric-tile,
+.module-tile,
+.record-grid div,
+.table-shell,
+.data-card,
+.data-card__grid > div {
+  min-width: 0;
+}
+
+.security-grid__detail,
+.registry-registration-grid__side,
+.obligation-workbench-grid__action,
+.assessment-workbench-grid__detail,
+.assessment-create-side,
+.collections-sticky-panel,
+.workflow-sticky-panel {
+  position: static;
+}
+
+.table-shell {
+  overflow-x: visible;
+}
+
+@media (max-width: 620px) {
+  .data-card__header,
+  .data-card__actions,
+  .data-record-modal__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .data-card__actions > *,
+  .data-record-modal__close {
+    width: 100%;
+  }
+
+  .data-record-modal {
+    padding: 12px;
+  }
+
+  .data-record-modal__panel {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .data-record-modal__body {
+    grid-template-columns: 1fr;
+    padding: 14px;
   }
 }
