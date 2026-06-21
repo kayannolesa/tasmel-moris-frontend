@@ -27,7 +27,7 @@ import MorisWordmark from "../components/common/MorisWordmark.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const navItems = [
-  { to: "/", label: "Command", icon: LayoutDashboard, end: true },
+  { to: "/", label: "Workspace", icon: LayoutDashboard, end: true },
   { to: "/admin", label: "Administration", icon: Settings2 },
   { to: "/registry", label: "Registry", icon: UsersRound },
   { to: "/configuration", label: "Configuration", icon: Landmark },
