@@ -2971,9 +2971,35 @@ a {
 .module-tile,
 .record-grid div,
 .table-shell,
+.data-card-shell,
+.data-card-list,
 .data-card,
 .data-card__grid > div {
+  width: 100%;
   min-width: 0;
+  justify-self: stretch;
+}
+
+.security-grid__directory,
+.security-grid__detail,
+.security-grid__create,
+.role-verification-grid__list,
+.role-verification-grid__detail,
+.role-verification-grid__table,
+.registry-profile-grid__summary,
+.registry-profile-grid__status,
+.registry-profile-grid__records,
+.registry-profile-grid__corrections,
+.collections-matter-grid__detail,
+.collections-ops-grid__tables,
+.collections-enforcement-grid__tables,
+.workflow-decision-grid__detail,
+.workflow-task-grid__all,
+.compliance-workbench-grid__main {
+  grid-area: auto;
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
 }
 
 .security-grid__detail,
