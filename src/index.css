@@ -878,6 +878,26 @@ a {
   gap: 14px;
 }
 
+.action-form,
+.stacked-form,
+.form-grid--two,
+.compact-form,
+.registry-create-form,
+.registry-filter-form,
+.obligation-filter-form,
+.assessment-filter-form,
+.assessment-create-form,
+.finance-receipt-form,
+.finance-filter-form,
+.finance-control-form,
+.collections-filter-form,
+.collections-two-column-form,
+.workflow-two-column-form,
+.workflow-filter-form,
+.document-two-column-form {
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+}
+
 .toolbar-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -899,6 +919,43 @@ a {
 
 .compact-form .full-span,
 .action-form .full-span {
+  grid-column: 1 / -1;
+}
+
+.action-form > .field:has(textarea),
+.stacked-form > .field:has(textarea),
+.form-grid--two > .field:has(textarea),
+.compact-form > .field:has(textarea),
+.registry-create-form > .field:has(textarea),
+.registry-filter-form > .field:has(textarea),
+.obligation-filter-form > .field:has(textarea),
+.assessment-filter-form > .field:has(textarea),
+.assessment-create-form > .field:has(textarea),
+.finance-receipt-form > .field:has(textarea),
+.finance-filter-form > .field:has(textarea),
+.finance-control-form > .field:has(textarea),
+.collections-filter-form > .field:has(textarea),
+.collections-two-column-form > .field:has(textarea),
+.workflow-two-column-form > .field:has(textarea),
+.workflow-filter-form > .field:has(textarea),
+.document-two-column-form > .field:has(textarea),
+.action-form > .full-span,
+.stacked-form > .full-span,
+.form-grid--two > .full-span,
+.compact-form > .full-span,
+.registry-create-form > .full-span,
+.registry-filter-form > .full-span,
+.obligation-filter-form > .full-span,
+.assessment-filter-form > .full-span,
+.assessment-create-form > .full-span,
+.finance-receipt-form > .full-span,
+.finance-filter-form > .full-span,
+.finance-control-form > .full-span,
+.collections-filter-form > .full-span,
+.collections-two-column-form > .full-span,
+.workflow-two-column-form > .full-span,
+.workflow-filter-form > .full-span,
+.document-two-column-form > .full-span {
   grid-column: 1 / -1;
 }
 
@@ -3010,6 +3067,63 @@ a {
   width: 100%;
 }
 
+.content-band .action-form,
+.content-band .stacked-form,
+.content-band .form-grid--two,
+.content-band .compact-form,
+.content-band .registry-create-form,
+.content-band .registry-filter-form,
+.content-band .obligation-filter-form,
+.content-band .assessment-filter-form,
+.content-band .assessment-create-form,
+.content-band .finance-receipt-form,
+.content-band .finance-filter-form,
+.content-band .finance-control-form,
+.content-band .collections-filter-form,
+.content-band .collections-two-column-form,
+.content-band .workflow-two-column-form,
+.content-band .workflow-filter-form,
+.content-band .document-two-column-form {
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+}
+
+.content-band .action-form > .field:has(textarea),
+.content-band .stacked-form > .field:has(textarea),
+.content-band .form-grid--two > .field:has(textarea),
+.content-band .compact-form > .field:has(textarea),
+.content-band .registry-create-form > .field:has(textarea),
+.content-band .registry-filter-form > .field:has(textarea),
+.content-band .obligation-filter-form > .field:has(textarea),
+.content-band .assessment-filter-form > .field:has(textarea),
+.content-band .assessment-create-form > .field:has(textarea),
+.content-band .finance-receipt-form > .field:has(textarea),
+.content-band .finance-filter-form > .field:has(textarea),
+.content-band .finance-control-form > .field:has(textarea),
+.content-band .collections-filter-form > .field:has(textarea),
+.content-band .collections-two-column-form > .field:has(textarea),
+.content-band .workflow-two-column-form > .field:has(textarea),
+.content-band .workflow-filter-form > .field:has(textarea),
+.content-band .document-two-column-form > .field:has(textarea),
+.content-band .action-form > .full-span,
+.content-band .stacked-form > .full-span,
+.content-band .form-grid--two > .full-span,
+.content-band .compact-form > .full-span,
+.content-band .registry-create-form > .full-span,
+.content-band .registry-filter-form > .full-span,
+.content-band .obligation-filter-form > .full-span,
+.content-band .assessment-filter-form > .full-span,
+.content-band .assessment-create-form > .full-span,
+.content-band .finance-receipt-form > .full-span,
+.content-band .finance-filter-form > .full-span,
+.content-band .finance-control-form > .full-span,
+.content-band .collections-filter-form > .full-span,
+.content-band .collections-two-column-form > .full-span,
+.content-band .workflow-two-column-form > .full-span,
+.content-band .workflow-filter-form > .full-span,
+.content-band .document-two-column-form > .full-span {
+  grid-column: 1 / -1;
+}
+
 .security-grid__directory,
 .security-grid__detail,
 .security-grid__create,
@@ -3047,6 +3161,26 @@ a {
 }
 
 @media (max-width: 620px) {
+  .content-band .action-form,
+  .content-band .stacked-form,
+  .content-band .form-grid--two,
+  .content-band .compact-form,
+  .content-band .registry-create-form,
+  .content-band .registry-filter-form,
+  .content-band .obligation-filter-form,
+  .content-band .assessment-filter-form,
+  .content-band .assessment-create-form,
+  .content-band .finance-receipt-form,
+  .content-band .finance-filter-form,
+  .content-band .finance-control-form,
+  .content-band .collections-filter-form,
+  .content-band .collections-two-column-form,
+  .content-band .workflow-two-column-form,
+  .content-band .workflow-filter-form,
+  .content-band .document-two-column-form {
+    grid-template-columns: 1fr;
+  }
+
   .data-card__header,
   .data-card__actions,
   .data-record-modal__header {
