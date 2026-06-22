@@ -313,6 +313,22 @@ a {
   color: #7b8f93;
 }
 
+input[type="checkbox"] {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--teal);
+  box-shadow: none;
+}
+
+.field input[type="checkbox"] {
+  justify-self: start;
+}
+
 .primary-button {
   min-height: 50px;
   display: inline-flex;
