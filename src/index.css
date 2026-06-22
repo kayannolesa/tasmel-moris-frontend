@@ -329,6 +329,22 @@ input[type="checkbox"] {
   justify-self: start;
 }
 
+.field:has(> input[type="checkbox"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 46px;
+}
+
+.field:has(> input[type="checkbox"]) > input[type="checkbox"] {
+  order: 1;
+}
+
+.field:has(> input[type="checkbox"]) > span {
+  order: 2;
+}
+
 .primary-button {
   min-height: 50px;
   display: inline-flex;
